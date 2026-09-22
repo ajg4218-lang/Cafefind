@@ -45,17 +45,6 @@
       background: transparent;
     }
     .search-bar-large input::placeholder { color: var(--clr-muted); }
-    .search-bar-large select {
-      border: none;
-      border-left: 2px solid var(--clr-border);
-      outline: none;
-      padding: 0.8em 1em;
-      font-size: var(--fs-sm);
-      font-family: var(--ff-body);
-      color: var(--clr-text);
-      background: var(--clr-foam);
-      cursor: pointer;
-    }
     .search-bar-large button {
       background: var(--clr-accent);
       color: var(--clr-white);
@@ -345,9 +334,6 @@
         <span class="nav-logo-text">Café<span>Find</span></span>
       </a>
       <ul class="nav-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="search.html" class="active">Search</a></li>
-        <li><a href="contact.html">Contact</a></li>
       </ul>
       <div class="nav-actions">
         <a href="login.html" class="btn btn-secondary btn-sm">Log In</a>
@@ -366,23 +352,11 @@
       <div class="container">
         <h1>Find Your Perfect Café</h1>
         <p>Search by name, neighbourhood, city, or postcode.</p>
-        <form action="#" method="get" novalidate>
+        <form id="search-form" action="#" method="get" novalidate>
           <div class="search-bar-large">
-            <input type="text" name="q"
+            <input type="text" id="search-input" name="q"
               placeholder="Search cafés, areas, or postcodes..."
               aria-label="Search cafés" />
-            <select name="city" aria-label="Select city">
-              <option value="">All Cities</option>
-              <option>London</option>
-              <option>Manchester</option>
-              <option>Bristol</option>
-              <option>Edinburgh</option>
-              <option>Birmingham</option>
-              <option>Leeds</option>
-              <option>Brighton</option>
-              <option>Oxford</option>
-              <option>Cambridge</option>
-            </select>
             <button type="submit">Search</button>
           </div>
         </form>
@@ -842,6 +816,7 @@
 
       setStatus('locating', 'Locating you…');
       requestUserLocation();
+      initSearchForm();   // wire search bar now that Maps SDK is loaded
     }
 
     /* Ask the browser for geolocation */
@@ -856,7 +831,11 @@
       navigator.geolocation.getCurrentPosition(
         onLocationSuccess,
         onLocationError,
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        // maximumAge:30000 — accept a cached position up to 30 s old.
+        // This lets the "Back to Search" flow resolve instantly from the
+        // browser's position cache rather than waiting for a cold GPS fix,
+        // which was the cause of location appearing broken after navigation.
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
       );
     }
 
@@ -927,6 +906,180 @@
     /* Show one of the notice banners below the map */
     function showNotice(id) {
       document.getElementById(id).classList.add('show');
+    }
+
+    /* ── Text Search ─────────────────────────────────────────────
+       Wired to the search bar form. Uses Place.searchByText()
+       which is part of the already-loaded Places library — no extra
+       API calls, no second Maps instance.
+
+       Empty query  → re-centre on user's current location.
+       Non-empty    → find the place, centre the map, drop a marker,
+                      and show a single result card.
+       ─────────────────────────────────────────────────────────── */
+
+    var searchMarker = null;   // marker for text-search result (separate from userMarker)
+
+    /* Called once the Maps SDK is ready (inside initMap) */
+    function initSearchForm() {
+      // On every page load, strip any ?q= from the URL so "Back" always
+      // returns to the clean default state (current location).
+      if (window.location.search) {
+        history.replaceState(null, '', window.location.pathname);
+      }
+
+      var form  = document.getElementById('search-form');
+      var input = document.getElementById('search-input');
+      if (!form || !input) return;
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();   // stop the GET redirect completely
+        var query = input.value.trim();
+        if (!query) {
+          // Empty search → restore current location view
+          resetToUserLocation();
+        } else {
+          runTextSearch(query);
+        }
+      });
+    }
+
+    /* Re-centre on the user's current position (reuses existing chain) */
+    function resetToUserLocation() {
+      // Clear any text-search marker
+      if (searchMarker) { searchMarker.setMap(null); searchMarker = null; }
+      setStatus('locating', 'Locating you…');
+      requestUserLocation();
+    }
+
+    /* Use Place.searchByText() (Places API New) to find a place by text */
+    function runTextSearch(query) {
+      // Clear previous search marker
+      if (searchMarker) { searchMarker.setMap(null); searchMarker = null; }
+
+      // Build the request — only request fields the UI actually renders
+      var request = {
+        textQuery: query,
+        fields: ['displayName', 'formattedAddress', 'location', 'id',
+                 'rating', 'userRatingCount', 'regularOpeningHours'],
+        maxResultCount: 1,
+        language: 'en'
+      };
+
+      // Bias toward the user's current position when available
+      if (nearbyUserPos) {
+        request.locationBias = {
+          center: new google.maps.LatLng(nearbyUserPos.lat, nearbyUserPos.lng),
+          radius: 50000   // 50 km soft bias — not a hard filter
+        };
+      }
+
+      google.maps.places.Place.searchByText(request)
+        .then(function (response) {
+          var places = response.places || [];
+
+          if (!places.length) {
+            document.getElementById('nearby-results').innerHTML =
+              '<div class="nearby-empty">' +
+              '<strong>No results found for "' + escHtml(query) + '"</strong>' +
+              'Try a different name, area, or postcode.' +
+              '</div>';
+            document.getElementById('nearby-count-bar').classList.remove('visible');
+            return;
+          }
+
+          var place = places[0];
+          var loc   = place.location;   // google.maps.LatLng on Place (New)
+          if (!loc) return;
+
+          // Centre map on result — reuses existing cafeMap
+          cafeMap.setCenter(loc);
+          cafeMap.setZoom(16);
+
+          // Drop a marker — same icon style as the existing place markers
+          searchMarker = new google.maps.Marker({
+            position:  loc,
+            map:       cafeMap,
+            title:     place.displayName || '',
+            animation: google.maps.Animation.DROP,
+            icon: {
+              path:        google.maps.SymbolPath.CIRCLE,
+              scale:       10,
+              fillColor:   '#6F4E37',   /* --clr-espresso */
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2
+            }
+          });
+
+          // Info window on the marker
+          var iw = new google.maps.InfoWindow({
+            content: '<div style="font-family:Lato,sans-serif;font-size:0.875rem;color:#2C2420;padding:4px 2px;">' +
+                     '<strong>' + escHtml(place.displayName || '') + '</strong>' +
+                     (place.formattedAddress ? '<br><span style="color:#6B5B4E;">' + escHtml(place.formattedAddress) + '</span>' : '') +
+                     (place.rating ? '<br>★ ' + place.rating : '') +
+                     '</div>'
+          });
+          searchMarker.addListener('click', function () { iw.open(cafeMap, searchMarker); });
+          iw.open(cafeMap, searchMarker);
+
+          // Result card — reuses existing .result-card design
+          var name    = place.displayName    || 'Unnamed';
+          var address = place.formattedAddress || '';
+          // Trim country suffix for brevity
+          address = address.replace(/,\s*(UK|United Kingdom|Philippines|US|USA)\s*$/i, '').trim();
+
+          var distM = nearbyUserPos
+            ? calcDistance(nearbyUserPos.lat, nearbyUserPos.lng, loc.lat(), loc.lng())
+            : null;
+
+          var mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' +
+                        encodeURIComponent(name + ' ' + (place.formattedAddress || ''));
+
+          var starsHtml = place.rating ? buildStars(place.rating) : '';
+
+          var openBadge = '';
+          var h = place.regularOpeningHours;
+          if (h && typeof h.isOpen === 'boolean') {
+            openBadge = h.isOpen
+              ? '<span class="badge-open">Open now</span>'
+              : '<span class="badge-closed">Closed</span>';
+          }
+
+          var countBar  = document.getElementById('nearby-count-bar');
+          var countText = document.getElementById('nearby-count-text');
+          countText.innerHTML = 'Showing result for <strong>' + escHtml(query) + '</strong>';
+          countBar.classList.add('visible');
+
+          document.getElementById('nearby-results').innerHTML =
+            '<article class="result-card">' +
+              '<div class="result-card-img"><div class="result-card-img-inner"></div></div>' +
+              '<div class="result-card-body">' +
+                '<h4>' + escHtml(name) + '</h4>' +
+                '<div class="result-card-meta">' +
+                  (address   ? '<span>' + escHtml(address) + '</span>' : '') +
+                  (distM !== null ? '<span>' + formatDistance(distM) + '</span>' : '') +
+                  (starsHtml ? '<span class="stars">' + starsHtml + '</span>' : '') +
+                  (place.rating ? '<span>' + place.rating.toFixed(1) +
+                    (place.userRatingCount ? ' (' + place.userRatingCount + ' reviews)' : '') + '</span>' : '') +
+                  (openBadge ? '<span>' + openBadge + '</span>' : '') +
+                '</div>' +
+                '<div style="display:flex; gap:var(--space-sm); flex-wrap:wrap; margin-top:var(--space-md);">' +
+                  '<a href="' + mapsUrl + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Get Directions</a>' +
+                  '<button onclick="resetToUserLocation()" class="btn btn-secondary btn-sm">Back to My Location</button>' +
+                '</div>' +
+              '</div>' +
+            '</article>';
+        })
+        .catch(function (err) {
+          console.error('[CaféFind] Place.searchByText error:', err);
+          document.getElementById('nearby-results').innerHTML =
+            '<div class="nearby-empty">' +
+            '<strong>Search error</strong>' +
+            escHtml(err && err.message ? err.message : String(err)) +
+            '</div>';
+          document.getElementById('nearby-count-bar').classList.remove('visible');
+        });
     }
 
     /* ── Nearby Café Search (Places JS Library) ────────────────
@@ -1201,6 +1354,19 @@
       var sel = document.getElementById('sortBy');
       return sel ? sel.value : 'distance';
     }
+
+    /* ── Back-Forward Cache (bfcache) restore handler ──────────
+       When a user navigates Back, most browsers restore the page
+       from bfcache — the JS heap is reused but the DOM is frozen.
+       initMap() does NOT re-run in this case, leaving cafeMap
+       pointing to a detached node. This listener catches that
+       restore and re-runs the full map + location flow.
+       ─────────────────────────────────────────────────────────── */
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted && typeof google !== 'undefined' && google.maps) {
+        initMap();
+      }
+    });
   </script>
 
   <!-- Load the Google Maps JavaScript API asynchronously.

@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    { "source": "/",                "destination": "/CafeFind/html/index.html"    },
+    { "source": "/index.html",      "destination": "/CafeFind/html/index.html"    },
+    { "source": "/search.html",     "destination": "/CafeFind/html/search.html"   },
+    { "source": "/login.html",      "destination": "/CafeFind/html/login.html"    },
+    { "source": "/account.html",    "destination": "/CafeFind/html/account.html"  },
+    { "source": "/listings.html",   "destination": "/CafeFind/html/listings.html" },
+    { "source": "/contact.html",    "destination": "/CafeFind/html/contact.html"  },
+    { "source": "/Owners.html",     "destination": "/CafeFind/html/Owners.html"   },
+    { "source": "/css/(.*)",        "destination": "/CafeFind/css/$1"             },
+    { "source": "/js/(.*)",         "destination": "/CafeFind/js/$1"              }
+  ]
+}

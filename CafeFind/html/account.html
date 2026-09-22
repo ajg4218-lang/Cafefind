@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -8,13 +9,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="/css/style.css" />
   <!-- Firebase compat SDKs (v9 compat layer — no bundler required) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="../js/firebase-config.js"></script>
-  <script src="../js/auth.js"></script>
+  <script src="/js/firebase-config.js"></script>
+  <script src="/js/auth.js"></script>
 </head>
 <body>
 
@@ -25,8 +26,6 @@
         <span class="nav-logo-text">Café<span>Find</span></span>
       </a>
       <ul class="nav-links" id="navLinks">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="contact.html">Contact</a></li>
       </ul>
       <div class="nav-actions">
         <a href="login.html" class="btn btn-secondary btn-sm">Log In</a>
@@ -49,7 +48,7 @@
 
     <section class="section section--cream">
       <div class="container">
-        <div class="grid-2" style="align-items:start; gap:var(--space-2xl); max-width:960px; margin:0 auto;">
+        <div style="max-width:480px; margin:0 auto;">
 
           <!-- Sign Up Card -->
           <div class="account-section">
@@ -82,43 +81,6 @@
             <p style="text-align:center; margin-top:var(--space-xl); font-size:var(--fs-sm); color:var(--clr-muted);">
               Already have an account? <a href="login.html">Log in here</a>
             </p>
-          </div>
-
-          <!-- Why Sign Up -->
-          <div>
-            <div class="account-section">
-              <h3>Why Create an Account?</h3>
-              <div class="steps" style="margin-top:var(--space-lg);">
-                <div class="step">
-                  <div class="step-num" style="background:var(--clr-green);">1</div>
-                  <div class="step-body">
-                    <h4>Save Favourite Cafés</h4>
-                    <p>Build a personal café list and access it from any device.</p>
-                  </div>
-                </div>
-                <div class="step">
-                  <div class="step-num" style="background:var(--clr-green);">2</div>
-                  <div class="step-body">
-                    <h4>Write and Read Reviews</h4>
-                    <p>Share honest reviews and help the community find great spots.</p>
-                  </div>
-                </div>
-                <div class="step">
-                  <div class="step-num" style="background:var(--clr-green);">3</div>
-                  <div class="step-body">
-                    <h4>Personalised Recommendations</h4>
-                    <p>Receive weekly suggestions based on your saved preferences.</p>
-                  </div>
-                </div>
-                <div class="step">
-                  <div class="step-num" style="background:var(--clr-green);">4</div>
-                  <div class="step-body">
-                    <h4>Stay in the Loop</h4>
-                    <p>Get notified when new cafés open in your city.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
         </div>
