@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact &amp; Support – CaféFind</title>
+  <!-- Google Font: Lato -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <!-- Firebase — nav auth-state observer only (public page, no auth guard) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  <style>
+    .contact-card {
+      background: var(--clr-white);
+      border-radius: var(--radius-md);
+      padding: var(--space-xl);
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+      border-top: 4px solid var(--clr-accent);
+    }
+    /* Decorative shape replaces icon */
+    .contact-card-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--clr-accent);
+      margin: 0 auto var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .contact-card-mark-inner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--clr-accent);
+      opacity: 0.25;
+    }
+    .contact-card h4 { margin-bottom: var(--space-sm); }
+    .contact-card p  { font-size: var(--fs-sm); color: var(--clr-muted); margin-bottom: var(--space-md); }
+    .contact-card a  { font-weight: 600; font-size: var(--fs-sm); }
+
+    .inquiry-option {
+      border: 2px solid var(--clr-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .inquiry-option:has(input:checked) {
+      border-color: var(--clr-accent);
+      background: var(--clr-accent-lt);
+    }
+    .inquiry-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+    /* Number label replaces icon */
+    .inquiry-label {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--clr-border);
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      color: var(--clr-muted);
+      line-height: 24px;
+      text-align: center;
+      margin-bottom: var(--space-sm);
+    }
+    .inquiry-option h5 { margin-bottom: var(--space-xs); font-size: var(--fs-base); }
+    .inquiry-option p  { font-size: var(--fs-xs); color: var(--clr-muted); margin: 0; }
+
+    .office-hours td, .office-hours th {
+      padding: 0.5em 1em;
+      font-size: var(--fs-sm);
+      border-bottom: 1px solid var(--clr-border);
+    }
+    .office-hours th {
+      text-align: left;
+      color: var(--clr-muted);
+      font-weight: 700;
+      background: none;
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .office-hours tr:last-child td { border-bottom: none; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <span class="nav-logo-mark"></span>
+        <span class="nav-logo-text">Café<span>Find</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="contact.html" class="active">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="btn btn-secondary btn-sm">Log In</a>
+        <a href="account.html" class="btn btn-primary btn-sm">Sign Up</a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+
+    <section class="page-hero">
+      <div class="container">
+        <h1>Contact &amp; Support</h1>
+        <p>We are here to help — reach out and we will get back to you promptly.</p>
+      </div>
+    </section>
+
+    <section class="section section--cream">
+      <div class="container">
+
+        <!-- Contact Cards -->
+        <div class="grid-3" style="margin-bottom:var(--space-2xl);">
+          <div class="contact-card">
+            <div class="contact-card-mark"><div class="contact-card-mark-inner"></div></div>
+            <h4>Email Support</h4>
+            <p>For general questions, account help, or feedback. We aim to reply within 24 hours.</p>
+            <a href="mailto:support@cafefind.example.com">support@cafefind.example.com</a>
+          </div>
+          <div class="contact-card">
+            <div class="contact-card-mark"><div class="contact-card-mark-inner"></div></div>
+            <h4>Phone Support</h4>
+            <p>Speak directly to our team. Available Monday to Friday during office hours.</p>
+            <a href="tel:+441234567890">+44 (0) 1234 567 890</a>
+          </div>
+          <div class="contact-card">
+            <div class="contact-card-mark"><div class="contact-card-mark-inner"></div></div>
+            <h4>Office Address</h4>
+            <p>CaféFind HQ, 42 Digital Way, MediaCityUK, Salford M50 2EQ, United Kingdom</p>
+            <a href="#">Get Directions</a>
+          </div>
+        </div>
+
+        <!-- Layout -->
+        <div class="layout-sidebar">
+
+          <!-- Support Form -->
+          <div>
+            <div class="account-section">
+              <h3>Send Us a Message</h3>
+              <p style="color:var(--clr-muted); font-size:var(--fs-sm); margin-bottom:var(--space-xl);">
+                Fill in the form below and we will get back to you within one business day.
+              </p>
+
+              <form action="#" method="post" novalidate>
+
+                <!-- Inquiry Type -->
+                <div class="form-group" style="margin-bottom:var(--space-xl);">
+                  <label style="display:block; margin-bottom:var(--space-md); font-size:var(--fs-sm); font-weight:600;">
+                    What can we help you with?
+                  </label>
+                  <div class="grid-3" style="gap:var(--space-md);">
+                    <label class="inquiry-option">
+                      <input type="radio" name="inquiry_type" value="general" checked />
+                      <span class="inquiry-label">01</span>
+                      <h5>General Enquiry</h5>
+                      <p>Questions about CaféFind</p>
+                    </label>
+                    <label class="inquiry-option">
+                      <input type="radio" name="inquiry_type" value="account" />
+                      <span class="inquiry-label">02</span>
+                      <h5>Account Help</h5>
+                      <p>Login, profile, or settings</p>
+                    </label>
+                    <label class="inquiry-option">
+                      <input type="radio" name="inquiry_type" value="listing" />
+                      <span class="inquiry-label">03</span>
+                      <h5>Café Listing</h5>
+                      <p>Add, edit, or remove a listing</p>
+                    </label>
+                    <label class="inquiry-option">
+                      <input type="radio" name="inquiry_type" value="review" />
+                      <span class="inquiry-label">04</span>
+                      <h5>Review Issue</h5>
+                      <p>Report a review or dispute</p>
+                    </label>
+                    <label class="inquiry-option">
+                      <input type="radio" name="inquiry_type" value="technical" />
+                      <span class="inquiry-label">05</span>
+                      <h5>Technical Issue</h5>
+                      <p>Bugs or site problems</p>
+                    </label>
+                    <label class="inquiry-option">
+                      <input type="radio" name="inquiry_type" value="partnership" />
+                      <span class="inquiry-label">06</span>
+                      <h5>Partnership</h5>
+                      <p>Press, media, or business</p>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="c-name">Full Name <span style="color:var(--clr-accent);">*</span></label>
+                    <input type="text" id="c-name" name="name" placeholder="Jane Smith" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="c-email">Email Address <span style="color:var(--clr-accent);">*</span></label>
+                    <input type="email" id="c-email" name="email" placeholder="jane@example.com" required />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="c-subject">Subject <span style="color:var(--clr-accent);">*</span></label>
+                  <input type="text" id="c-subject" name="subject" placeholder="Brief description of your query" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="c-account">Account Email or Username <span style="font-weight:400; color:var(--clr-muted);">(if applicable)</span></label>
+                  <input type="text" id="c-account" name="account_ref" placeholder="Helps us locate your account quickly" />
+                </div>
+
+                <div class="form-group">
+                  <label for="c-message">Your Message <span style="color:var(--clr-accent);">*</span></label>
+                  <textarea id="c-message" name="message" rows="6"
+                    placeholder="Please describe your question or issue in as much detail as possible..." required></textarea>
+                  <span class="form-hint">The more detail you provide, the faster we can help.</span>
+                </div>
+
+                <div class="form-group">
+                  <label for="c-priority">Priority</label>
+                  <select id="c-priority" name="priority">
+                    <option value="normal" selected>Normal – reply within 24 hours</option>
+                    <option value="urgent">Urgent – account or billing issue</option>
+                    <option value="low">Low – general feedback</option>
+                  </select>
+                </div>
+
+                <label class="form-check" style="margin-bottom:var(--space-xl);">
+                  <input type="checkbox" name="copy" />
+                  <span style="font-size:var(--fs-sm);">Send me a copy of this message</span>
+                </label>
+
+                <button type="submit" class="btn btn-primary btn-lg btn-block">Send Message</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Sidebar -->
+          <aside>
+
+            <div class="sidebar-box">
+              <h4>Support Hours</h4>
+              <table class="office-hours" style="width:100%; border-collapse:collapse;">
+                <thead>
+                  <tr><th>Day</th><th>Hours</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Monday – Friday</td><td>9am – 6pm</td></tr>
+                  <tr><td>Saturday</td><td>10am – 4pm</td></tr>
+                  <tr><td>Sunday</td><td>Closed</td></tr>
+                  <tr><td>Bank Holidays</td><td>Closed</td></tr>
+                </tbody>
+              </table>
+              <p style="font-size:var(--fs-xs); color:var(--clr-muted); margin-top:var(--space-sm);">All times are UK (GMT/BST).</p>
+            </div>
+
+            <div class="sidebar-box">
+              <h4>Quick Help</h4>
+              <ul style="padding:0;">
+                <li style="padding:var(--space-sm) 0; border-bottom:1px solid var(--clr-border);">
+                  <a href="account.html" style="font-size:var(--fs-sm);">Create or manage your account</a>
+                </li>
+                <li style="padding:var(--space-sm) 0; border-bottom:1px solid var(--clr-border);">
+                  <a href="login.html#forgot" style="font-size:var(--fs-sm);">Reset your password</a>
+                </li>
+                <li style="padding:var(--space-sm) 0; border-bottom:1px solid var(--clr-border);">
+                  <a href="Owners.html#submit" style="font-size:var(--fs-sm);">Submit a café listing</a>
+                </li>
+                <li style="padding:var(--space-sm) 0; border-bottom:1px solid var(--clr-border);">
+                  <a href="search.html" style="font-size:var(--fs-sm);">Search for a café</a>
+                </li>
+                <li style="padding:var(--space-sm) 0;">
+                  <a href="#faq" style="font-size:var(--fs-sm);">Browse the FAQ</a>
+                </li>
+              </ul>
+            </div>
+
+            <div class="sidebar-box">
+              <h4>Follow CaféFind</h4>
+              <p style="font-size:var(--fs-sm); color:var(--clr-muted);">Stay updated with new cafés, features, and community stories.</p>
+              <div style="display:flex; flex-direction:column; gap:var(--space-sm);">
+                <a href="#" class="btn btn-secondary btn-sm btn-block">Instagram @cafefind</a>
+                <a href="#" class="btn btn-secondary btn-sm btn-block">Twitter / X @cafefind</a>
+                <a href="#" class="btn btn-secondary btn-sm btn-block">Facebook /CaféFind</a>
+              </div>
+            </div>
+
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section section--white" id="faq">
+      <div class="container">
+        <div class="text-center section-header">
+          <span class="card-tag">FAQ</span>
+          <h2 class="section-title">Frequently Asked Questions</h2>
+          <p class="section-sub">Quick answers to the most common questions.</p>
+        </div>
+        <div style="max-width:760px; margin:0 auto;">
+
+          <h4 style="color:var(--clr-accent); margin-bottom:var(--space-md); font-family:var(--ff-body); font-size:var(--fs-sm); text-transform:uppercase; letter-spacing:0.08em;">For Visitors</h4>
+
+          <div class="faq-item">
+            <h4>Is CaféFind free to use?</h4>
+            <p>Yes — browsing, searching, and creating a customer account are completely free, now and always.</p>
+          </div>
+          <div class="faq-item">
+            <h4>How do I save a café to my list?</h4>
+            <p>Create a free account and use the Save button on any café listing or search result to add it to your profile.</p>
+          </div>
+          <div class="faq-item">
+            <h4>How do reviews work?</h4>
+            <p>Registered users can leave a star rating and written review for any café. We moderate reviews to remove spam but do not edit genuine opinions.</p>
+          </div>
+          <div class="faq-item">
+            <h4>Can I report inaccurate café information?</h4>
+            <p>Yes — use the Suggest an Edit button on any café profile, or contact us via the form above and we will update it promptly.</p>
+          </div>
+          <div class="faq-item">
+            <h4>How do I delete my account?</h4>
+            <p>Go to Account, then Settings, then Delete Account. Alternatively email us at support@cafefind.example.com and we will handle it within 48 hours.</p>
+          </div>
+
+          <h4 style="color:var(--clr-accent); margin:var(--space-xl) 0 var(--space-md); font-family:var(--ff-body); font-size:var(--fs-sm); text-transform:uppercase; letter-spacing:0.08em;">For Café Owners</h4>
+
+          <div class="faq-item">
+            <h4>How do I get my café listed?</h4>
+            <p>Fill in the submission form on the <a href="Owners.html#submit">For Owners</a> page. Basic listings are free and go live within 24 hours after review.</p>
+          </div>
+          <div class="faq-item">
+            <h4>Can I update my café information after listing?</h4>
+            <p>Yes — log in to your owner account and edit your profile at any time. Changes go live immediately after a quick automated check.</p>
+          </div>
+          <div class="faq-item">
+            <h4>What is the difference between Basic and Pro plans?</h4>
+            <p>Basic is free and includes a standard listing. Pro (£9/month) adds featured placement, an analytics dashboard, and a photo gallery. See the full comparison on the <a href="Owners.html#pricing">For Owners</a> page.</p>
+          </div>
+          <div class="faq-item">
+            <h4>How do I respond to a review?</h4>
+            <p>Owner accounts can reply directly to any review from the Owner Dashboard. Responses appear publicly below the original review.</p>
+          </div>
+          <div class="faq-item">
+            <h4>Can I remove a negative review?</h4>
+            <p>We do not remove genuine reviews. If a review violates our guidelines — spam, hate speech, or false claims — contact us and we will investigate.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section section--espresso">
+      <div class="container text-center">
+        <h2 style="color:var(--clr-white); margin-bottom:var(--space-sm);">Still Need Help?</h2>
+        <p style="color:var(--clr-muted-dark); margin-bottom:var(--space-xl); font-size:var(--fs-md);">
+          Our support team is responsive and always happy to assist.
+        </p>
+        <div style="display:flex; gap:var(--space-md); justify-content:center; flex-wrap:wrap;">
+          <a href="mailto:support@cafefind.example.com" class="btn btn-primary btn-lg">Email Support</a>
+          <a href="tel:+441234567890" class="btn btn-secondary btn-lg">Call Us</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="nav-logo">
+            <span class="nav-logo-mark"></span>
+            <span class="nav-logo-text">Café<span>Find</span></span>
+          </a>
+          <p>Connecting coffee lovers with the cafés they will adore — one cup at a time.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Explore</h5>
+          <ul>
+            <li><a href="search.html">Search Cafés</a></li>
+            <li><a href="listings.html">Browse Listings</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Account</h5>
+          <ul>
+            <li><a href="account.html">Create Account</a></li>
+            <li><a href="login.html">Log In</a></li>
+            <li><a href="Owners.html">Owner Portal</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Support</h5>
+          <ul>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="contact.html#faq">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 CaféFind. All rights reserved.</span>
+        <span>Crafted for coffee lovers everywhere.</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

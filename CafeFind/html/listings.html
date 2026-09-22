@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browse Cafés – CaféFind</title>
+  <!-- Google Font: Lato -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <!-- Firebase auth guard — redirects to login.html if not signed in -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  <style>
+    .cafe-profile {
+      background: var(--clr-white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: var(--space-xl);
+    }
+    .cafe-profile-banner {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--clr-cream), var(--clr-latte-lt));
+      border-bottom: 1px solid var(--clr-border);
+    }
+    .cafe-profile-banner-inner {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--clr-border);
+      border: 3px solid var(--clr-latte);
+    }
+    .cafe-profile-body { padding: var(--space-xl); }
+    .cafe-profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--space-lg);
+      flex-wrap: wrap;
+      margin-bottom: var(--space-lg);
+    }
+    .cafe-details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-md);
+      font-size: var(--fs-sm);
+      color: var(--clr-muted);
+      margin-bottom: var(--space-lg);
+      background: var(--clr-foam);
+      border-radius: var(--radius-sm);
+      padding: var(--space-lg);
+    }
+    .cafe-details-grid span { display: flex; align-items: flex-start; gap: var(--space-sm); }
+    .cafe-detail-label {
+      font-weight: 700;
+      color: var(--clr-espresso);
+      min-width: 56px;
+      flex-shrink: 0;
+    }
+
+    .review-item { border-bottom: 1px solid var(--clr-border); padding: var(--space-lg) 0; }
+    .review-item:last-child { border-bottom: none; }
+    .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs); flex-wrap: wrap; gap: var(--space-sm); }
+    .review-author { font-weight: 700; font-size: var(--fs-sm); }
+    .review-date { font-size: var(--fs-xs); color: var(--clr-muted); }
+    .review-text { font-size: var(--fs-sm); color: var(--clr-muted); margin: 0; }
+
+    .featured-ribbon {
+      display: inline-block;
+      background: var(--clr-accent);
+      color: var(--clr-white);
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 0.25em 0.9em;
+      border-radius: var(--radius-pill);
+      margin-bottom: var(--space-sm);
+    }
+
+    .tip-list { padding-left: 0; }
+    .tip-list li {
+      padding: var(--space-sm) 0;
+      border-bottom: 1px solid var(--clr-border);
+      font-size: var(--fs-sm);
+      color: var(--clr-muted);
+      display: flex;
+      gap: var(--space-md);
+      align-items: flex-start;
+    }
+    .tip-list li:last-child { border-bottom: none; }
+    .tip-num {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--clr-cream);
+      border: 1px solid var(--clr-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      color: var(--clr-roast);
+      margin-top: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <span class="nav-logo-mark"></span>
+        <span class="nav-logo-text">Café<span>Find</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="listings.html" class="active">Browse Cafés</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="btn btn-secondary btn-sm">Log In</a>
+        <a href="account.html" class="btn btn-primary btn-sm">Sign Up</a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+
+    <section class="page-hero">
+      <div class="container">
+        <h1>Browse Cafés</h1>
+        <p>Explore featured listings, full café profiles, and curated tips.</p>
+      </div>
+    </section>
+
+    <section class="section section--cream">
+      <div class="container">
+        <div class="layout-sidebar">
+
+          <!-- Main Content -->
+          <div>
+
+            <span id="featured"></span>
+            <h2 style="margin-bottom:var(--space-lg);">Featured Cafés</h2>
+            <div class="grid-2" style="margin-bottom:var(--space-2xl);">
+
+              <div class="card">
+                <div class="card-img-placeholder">
+                  <div class="card-img-placeholder-inner"></div>
+                </div>
+                <div class="card-body">
+                  <span class="featured-ribbon">Featured</span>
+                  <div class="card-tag">Northern Quarter &middot; Manchester</div>
+                  <h3 class="card-title">The Roasted Bean</h3>
+                  <div class="card-meta">
+                    <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                    <span>4.9 (218)</span>
+                    <span class="price-range">££</span>
+                  </div>
+                  <div class="card-badges">
+                    <span class="badge badge-green">Free Wi-Fi</span>
+                    <span class="badge badge-green">Power Outlets</span>
+                    <span class="badge badge-brown">Quiet Zone</span>
+                  </div>
+                  <p style="font-size:var(--fs-sm); color:var(--clr-muted);">
+                    A beloved independent with single-origin espresso and study booths.
+                  </p>
+                  <div style="display:flex; gap:var(--space-sm); flex-wrap:wrap;">
+                    <a href="#roasted-bean" class="btn btn-primary btn-sm">View Profile</a>
+                    <a href="account.html" class="btn btn-secondary btn-sm">Save</a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-img-placeholder">
+                  <div class="card-img-placeholder-inner"></div>
+                </div>
+                <div class="card-body">
+                  <span class="featured-ribbon">Featured</span>
+                  <div class="card-tag">Chorlton &middot; Manchester</div>
+                  <h3 class="card-title">Green Grounds</h3>
+                  <div class="card-meta">
+                    <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
+                    <span>4.6 (154)</span>
+                    <span class="price-range">£</span>
+                  </div>
+                  <div class="card-badges">
+                    <span class="badge badge-green">Vegan Menu</span>
+                    <span class="badge badge-green">Outdoor Seating</span>
+                    <span class="badge badge-green">Pet Friendly</span>
+                  </div>
+                  <p style="font-size:var(--fs-sm); color:var(--clr-muted);">
+                    Garden terrace with 100% plant-based food and ethically sourced beans.
+                  </p>
+                  <div style="display:flex; gap:var(--space-sm); flex-wrap:wrap;">
+                    <a href="#green-grounds" class="btn btn-primary btn-sm">View Profile</a>
+                    <a href="account.html" class="btn btn-secondary btn-sm">Save</a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-img-placeholder">
+                  <div class="card-img-placeholder-inner"></div>
+                </div>
+                <div class="card-body">
+                  <span class="featured-ribbon">Featured</span>
+                  <div class="card-tag">Didsbury &middot; Manchester</div>
+                  <h3 class="card-title">Page &amp; Perk</h3>
+                  <div class="card-meta">
+                    <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                    <span>4.8 (97)</span>
+                    <span class="price-range">££</span>
+                  </div>
+                  <div class="card-badges">
+                    <span class="badge badge-green">Free Wi-Fi</span>
+                    <span class="badge badge-brown">Bookshop Café</span>
+                    <span class="badge badge-brown">Sofas</span>
+                  </div>
+                  <p style="font-size:var(--fs-sm); color:var(--clr-muted);">
+                    Browse second-hand books and sip a house flat white in armchair comfort.
+                  </p>
+                  <div style="display:flex; gap:var(--space-sm); flex-wrap:wrap;">
+                    <a href="#page-perk" class="btn btn-primary btn-sm">View Profile</a>
+                    <a href="account.html" class="btn btn-secondary btn-sm">Save</a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-img-placeholder">
+                  <div class="card-img-placeholder-inner"></div>
+                </div>
+                <div class="card-body">
+                  <span class="featured-ribbon">Featured</span>
+                  <div class="card-tag">Ancoats &middot; Manchester</div>
+                  <h3 class="card-title">Crème &amp; Crumble</h3>
+                  <div class="card-meta">
+                    <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
+                    <span>4.4 (183)</span>
+                    <span class="price-range">££</span>
+                  </div>
+                  <div class="card-badges">
+                    <span class="badge badge-green">Free Wi-Fi</span>
+                    <span class="badge badge-orange">Bakery Café</span>
+                    <span class="badge badge-brown">Group Tables</span>
+                  </div>
+                  <p style="font-size:var(--fs-sm); color:var(--clr-muted);">
+                    Fresh pastries baked on-site daily alongside exceptional filter coffee.
+                  </p>
+                  <div style="display:flex; gap:var(--space-sm); flex-wrap:wrap;">
+                    <a href="#creme-crumble" class="btn btn-primary btn-sm">View Profile</a>
+                    <a href="account.html" class="btn btn-secondary btn-sm">Save</a>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Café Profile 1 -->
+            <div class="cafe-profile" id="roasted-bean">
+              <div class="cafe-profile-banner">
+                <div class="cafe-profile-banner-inner"></div>
+              </div>
+              <div class="cafe-profile-body">
+                <div class="cafe-profile-header">
+                  <div>
+                    <span class="featured-ribbon">Featured</span>
+                    <h2 style="margin-bottom:var(--space-xs);">The Roasted Bean</h2>
+                    <div style="display:flex; gap:var(--space-md); align-items:center; flex-wrap:wrap;">
+                      <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                      <span style="font-size:var(--fs-sm); color:var(--clr-muted);">4.9 &middot; 218 reviews</span>
+                      <span class="price-range">££</span>
+                    </div>
+                  </div>
+                  <div style="display:flex; gap:var(--space-sm); flex-wrap:wrap;">
+                    <a href="account.html" class="btn btn-secondary">Save to Favorites</a>
+                    <a href="search.html" class="btn btn-primary">Get Directions</a>
+                  </div>
+                </div>
+
+                <div class="card-badges" style="margin-bottom:var(--space-lg);">
+                  <span class="badge badge-green">Free Wi-Fi</span>
+                  <span class="badge badge-green">Power Outlets</span>
+                  <span class="badge badge-green">Wheelchair Accessible</span>
+                  <span class="badge badge-brown">Quiet Study Zone</span>
+                  <span class="badge badge-orange">Independent</span>
+                </div>
+
+                <p style="color:var(--clr-muted);">
+                  Tucked into a Victorian railway arch in Manchester's Northern Quarter,
+                  The Roasted Bean is the city's go-to spot for serious coffee and focused
+                  work. Sourcing beans directly from small farms in Ethiopia, Colombia, and
+                  Guatemala, their espresso bar is run by competition-trained baristas.
+                  The hushed atmosphere, no-calls policy, and reliable 200 Mbps Wi-Fi make it
+                  a firm favourite among students and remote workers.
+                </p>
+
+                <div class="cafe-details-grid">
+                  <span><span class="cafe-detail-label">Address</span> 14 Cotton Street, Northern Quarter, Manchester M4 5BF</span>
+                  <span><span class="cafe-detail-label">Hours</span> Mon–Fri 7am–7pm &middot; Sat–Sun 8am–6pm</span>
+                  <span><span class="cafe-detail-label">Wi-Fi</span> Free &middot; Password on receipt</span>
+                  <span><span class="cafe-detail-label">Seating</span> 38 seats &middot; Quiet zone available</span>
+                  <span><span class="cafe-detail-label">Phone</span> 0161 234 5678</span>
+                  <span><span class="cafe-detail-label">Website</span> www.roastedbean.example.com</span>
+                </div>
+
+                <div class="menu-list">
+                  <h4>Menu Highlights</h4>
+                  <ul class="menu-item-list">
+                    <li class="menu-item">
+                      <span class="menu-item-name">Espresso<span class="menu-item-desc">Double shot, single-origin</span></span>
+                      <span class="menu-item-price">£2.60</span>
+                    </li>
+                    <li class="menu-item">
+                      <span class="menu-item-name">Flat White<span class="menu-item-desc">House blend, oat or whole milk</span></span>
+                      <span class="menu-item-price">£3.40</span>
+                    </li>
+                    <li class="menu-item">
+                      <span class="menu-item-name">Pour-Over &mdash; Guatemala<span class="menu-item-desc">Single-origin, brewed to order</span></span>
+                      <span class="menu-item-price">£4.20</span>
+                    </li>
+                    <li class="menu-item">
+                      <span class="menu-item-name">Almond Croissant<span class="menu-item-desc">Baked fresh every morning</span></span>
+                      <span class="menu-item-price">£3.10</span>
+                    </li>
+                    <li class="menu-item">
+                      <span class="menu-item-name">Avocado Toast<span class="menu-item-desc">Sourdough, chilli flakes, lime</span></span>
+                      <span class="menu-item-price">£6.50</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <h4 style="margin-bottom:var(--space-md);">Recent Reviews</h4>
+                <div class="review-item">
+                  <div class="review-header">
+                    <span class="review-author">Priya S.</span>
+                    <span class="stars" style="font-size:var(--fs-sm);">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                    <span class="review-date">October 2026</span>
+                  </div>
+                  <p class="review-text">"Perfect study café. The Wi-Fi never drops and the staff are unbothered by you staying for four hours."</p>
+                </div>
+                <div class="review-item">
+                  <div class="review-header">
+                    <span class="review-author">Marcus T.</span>
+                    <span class="stars" style="font-size:var(--fs-sm);">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                    <span class="review-date">September 2026</span>
+                  </div>
+                  <p class="review-text">"Best flat white in Manchester, full stop. The Ethiopian pour-over is also worth every penny."</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Café Profile 2 -->
+            <div class="cafe-profile" id="green-grounds">
+              <div class="cafe-profile-banner">
+                <div class="cafe-profile-banner-inner"></div>
+              </div>
+              <div class="cafe-profile-body">
+                <div class="cafe-profile-header">
+                  <div>
+                    <span class="featured-ribbon">Featured</span>
+                    <h2 style="margin-bottom:var(--space-xs);">Green Grounds</h2>
+                    <div style="display:flex; gap:var(--space-md); align-items:center; flex-wrap:wrap;">
+                      <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
+                      <span style="font-size:var(--fs-sm); color:var(--clr-muted);">4.6 &middot; 154 reviews</span>
+                      <span class="price-range">£</span>
+                    </div>
+                  </div>
+                  <div style="display:flex; gap:var(--space-sm); flex-wrap:wrap;">
+                    <a href="account.html" class="btn btn-secondary">Save to Favorites</a>
+                    <a href="search.html" class="btn btn-primary">Get Directions</a>
+                  </div>
+                </div>
+
+                <div class="card-badges" style="margin-bottom:var(--space-lg);">
+                  <span class="badge badge-green">100% Vegan</span>
+                  <span class="badge badge-green">Outdoor Seating</span>
+                  <span class="badge badge-green">Pet Friendly</span>
+                  <span class="badge badge-green">Free Wi-Fi</span>
+                  <span class="badge badge-brown">Plant-based Café</span>
+                </div>
+
+                <p style="color:var(--clr-muted);">
+                  Green Grounds occupies a converted Victorian terrace with a hidden
+                  walled garden in Chorlton. Every item on the menu is 100% plant-based,
+                  sourced within 50 miles where possible. Their oat-milk lattes have won
+                  awards three years running, and the weekend brunch queue regularly
+                  stretches down the street. Dogs welcome; cats have been spotted.
+                </p>
+
+                <div class="cafe-details-grid">
+                  <span><span class="cafe-detail-label">Address</span> 77 Beech Road, Chorlton, Manchester M21 9EQ</span>
+                  <span><span class="cafe-detail-label">Hours</span> Mon–Sun 8am–5pm</span>
+                  <span><span class="cafe-detail-label">Wi-Fi</span> Free &middot; Open network</span>
+                  <span><span class="cafe-detail-label">Seating</span> 20 indoor + 30 outdoor seats</span>
+                  <span><span class="cafe-detail-label">Phone</span> 0161 345 6789</span>
+                  <span><span class="cafe-detail-label">Website</span> www.greengrounds.example.com</span>
+                </div>
+
+                <div class="menu-list">
+                  <h4>Menu Highlights</h4>
+                  <ul class="menu-item-list">
+                    <li class="menu-item">
+                      <span class="menu-item-name">Oat-Milk Latte<span class="menu-item-desc">Award-winning house blend</span></span>
+                      <span class="menu-item-price">£3.60</span>
+                    </li>
+                    <li class="menu-item">
+                      <span class="menu-item-name">Iced Matcha<span class="menu-item-desc">Ceremonial grade, oat milk</span></span>
+                      <span class="menu-item-price">£4.10</span>
+                    </li>
+                    <li class="menu-item">
+                      <span class="menu-item-name">Shakshuka<span class="menu-item-desc">Plant-based, sourdough on the side</span></span>
+                      <span class="menu-item-price">£8.50</span>
+                    </li>
+                    <li class="menu-item">
+                      <span class="menu-item-name">Banana Bread<span class="menu-item-desc">Baked daily, walnut topping</span></span>
+                      <span class="menu-item-price">£3.30</span>
+                    </li>
+                    <li class="menu-item">
+                      <span class="menu-item-name">Garden Salad Bowl<span class="menu-item-desc">Seasonal, locally sourced</span></span>
+                      <span class="menu-item-price">£7.20</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <h4 style="margin-bottom:var(--space-md);">Recent Reviews</h4>
+                <div class="review-item">
+                  <div class="review-header">
+                    <span class="review-author">Sophie R.</span>
+                    <span class="stars" style="font-size:var(--fs-sm);">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                    <span class="review-date">October 2026</span>
+                  </div>
+                  <p class="review-text">"My favourite weekend spot. The shakshuka is incredible and the oat latte beats any chain café."</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <h2 style="margin-bottom:var(--space-lg);">Quick Comparison</h2>
+            <div style="overflow-x:auto; margin-bottom:var(--space-2xl);">
+              <table class="compare-table">
+                <thead>
+                  <tr>
+                    <th>Café</th>
+                    <th>Area</th>
+                    <th>Price</th>
+                    <th>Rating</th>
+                    <th>Wi-Fi</th>
+                    <th>Outlets</th>
+                    <th>Outdoor</th>
+                    <th>Vegan</th>
+                    <th>Study-friendly</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>The Roasted Bean</strong></td>
+                    <td>Northern Quarter</td>
+                    <td class="price-range">££</td>
+                    <td><span class="stars" style="font-size:var(--fs-sm);">&#9733;&#9733;&#9733;&#9733;&#9733;</span> 4.9</td>
+                    <td class="check">Yes</td>
+                    <td class="check">Yes</td>
+                    <td class="cross">No</td>
+                    <td class="cross">No</td>
+                    <td class="check">Excellent</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Green Grounds</strong></td>
+                    <td>Chorlton</td>
+                    <td class="price-range">£</td>
+                    <td><span class="stars" style="font-size:var(--fs-sm);">&#9733;&#9733;&#9733;&#9733;&#9734;</span> 4.6</td>
+                    <td class="check">Yes</td>
+                    <td class="cross">No</td>
+                    <td class="check">Yes</td>
+                    <td class="check">Yes</td>
+                    <td>Moderate</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Page &amp; Perk</strong></td>
+                    <td>Didsbury</td>
+                    <td class="price-range">££</td>
+                    <td><span class="stars" style="font-size:var(--fs-sm);">&#9733;&#9733;&#9733;&#9733;&#9733;</span> 4.8</td>
+                    <td class="check">Yes</td>
+                    <td class="cross">No</td>
+                    <td class="cross">No</td>
+                    <td class="cross">No</td>
+                    <td class="check">Excellent</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Crème &amp; Crumble</strong></td>
+                    <td>Ancoats</td>
+                    <td class="price-range">££</td>
+                    <td><span class="stars" style="font-size:var(--fs-sm);">&#9733;&#9733;&#9733;&#9733;&#9734;</span> 4.4</td>
+                    <td class="check">Yes</td>
+                    <td class="cross">No</td>
+                    <td class="cross">No</td>
+                    <td>Partial</td>
+                    <td>Low</td>
+                  </tr>
+                  <tr>
+                    <td><strong>The Espresso Works</strong></td>
+                    <td>City Centre</td>
+                    <td class="price-range">£££</td>
+                    <td><span class="stars" style="font-size:var(--fs-sm);">&#9733;&#9733;&#9733;&#9733;&#9734;</span> 4.3</td>
+                    <td class="check">Yes</td>
+                    <td class="check">Yes</td>
+                    <td class="check">Yes</td>
+                    <td class="cross">No</td>
+                    <td class="check">Good</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- Sidebar -->
+          <aside>
+            <div class="sidebar-box" id="student-tips">
+              <h4>Student Tips</h4>
+              <ul class="tip-list">
+                <li>
+                  <span class="tip-num">1</span>
+                  <span>Always check Wi-Fi speed reviews before planning a study session — some free Wi-Fi cafés enforce heavy speed caps.</span>
+                </li>
+                <li>
+                  <span class="tip-num">2</span>
+                  <span>Power outlet availability varies. Arrive early for a seat near a socket, or check the café profile first.</span>
+                </li>
+                <li>
+                  <span class="tip-num">3</span>
+                  <span>Buy at least one drink per 90–120 minutes to stay on good terms with staff — it keeps seats available for everyone.</span>
+                </li>
+                <li>
+                  <span class="tip-num">4</span>
+                  <span>Noise-cancelling headphones are invaluable in busier cafés. Reserve quiet-zone seats for reading or revision.</span>
+                </li>
+                <li>
+                  <span class="tip-num">5</span>
+                  <span>Midweek mornings (9–11am) are the quietest times at most CaféFind listings.</span>
+                </li>
+                <li>
+                  <span class="tip-num">6</span>
+                  <span>Some cafés offer student discounts — look for the Student Discount badge on listing cards.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="sidebar-box">
+              <h4>Quick Search</h4>
+              <form action="search.html" method="get">
+                <div class="form-group">
+                  <input type="text" name="q" placeholder="Search cafés..." />
+                </div>
+                <div class="form-group">
+                  <select name="city">
+                    <option value="">All Cities</option>
+                    <option>Manchester</option>
+                    <option>London</option>
+                    <option>Bristol</option>
+                    <option>Edinburgh</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block btn-sm">Search</button>
+              </form>
+            </div>
+
+            <div class="sidebar-box">
+              <h4>Recently Added</h4>
+              <ul style="padding:0;">
+                <li style="padding:var(--space-sm) 0; border-bottom:1px solid var(--clr-border); font-size:var(--fs-sm);">
+                  <a href="#">Harbour Brew Co. – Bristol</a>
+                  <div class="stars" style="font-size:var(--fs-xs);">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                </li>
+                <li style="padding:var(--space-sm) 0; border-bottom:1px solid var(--clr-border); font-size:var(--fs-sm);">
+                  <a href="#">The Belfry Café – Edinburgh</a>
+                  <div class="stars" style="font-size:var(--fs-xs);">&#9733;&#9733;&#9733;&#9733;&#9734;</div>
+                </li>
+                <li style="padding:var(--space-sm) 0; border-bottom:1px solid var(--clr-border); font-size:var(--fs-sm);">
+                  <a href="#">Bloom Coffee – Oxford</a>
+                  <div class="stars" style="font-size:var(--fs-xs);">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                </li>
+                <li style="padding:var(--space-sm) 0; font-size:var(--fs-sm);">
+                  <a href="#">Sunstone Roasters – Leeds</a>
+                  <div class="stars" style="font-size:var(--fs-xs);">&#9733;&#9733;&#9733;&#9733;&#9734;</div>
+                </li>
+              </ul>
+            </div>
+
+            <div class="sidebar-box" style="background:linear-gradient(135deg,var(--clr-espresso),var(--clr-roast)); color:var(--clr-cream);">
+              <h4 style="color:var(--clr-cream);">Own a Café?</h4>
+              <p style="font-size:var(--fs-sm); color:var(--clr-muted-dark);">Get listed on CaféFind and reach thousands of new customers every month.</p>
+              <a href="Owners.html" class="btn btn-primary btn-block btn-sm" style="margin-top:var(--space-sm);">List Your Café</a>
+            </div>
+          </aside>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="nav-logo">
+            <span class="nav-logo-mark"></span>
+            <span class="nav-logo-text">Café<span>Find</span></span>
+          </a>
+          <p>Connecting coffee lovers with the cafés they will adore — one cup at a time.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Explore</h5>
+          <ul>
+            <li><a href="search.html">Search Cafés</a></li>
+            <li><a href="listings.html">Browse Listings</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Account</h5>
+          <ul>
+            <li><a href="account.html">Create Account</a></li>
+            <li><a href="login.html">Log In</a></li>
+            <li><a href="Owners.html">Owner Portal</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Support</h5>
+          <ul>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="contact.html#faq">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 CaféFind. All rights reserved.</span>
+        <span>Crafted for coffee lovers everywhere.</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

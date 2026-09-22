@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Café Owners – CaféFind</title>
+  <!-- Google Font: Lato -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <!-- Firebase auth guard — redirects to login.html if not signed in -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  <style>
+    .owner-hero {
+      background: linear-gradient(135deg, #1a3a2a 0%, var(--clr-green) 100%);
+      color: var(--clr-white);
+      padding: var(--space-2xl) 0;
+    }
+    .owner-hero h1 { color: var(--clr-white); margin-bottom: var(--space-sm); }
+    .owner-hero p  { color: #c8e6d2; font-size: var(--fs-md); margin-bottom: var(--space-xl); }
+    .owner-hero .hero-eyebrow { background: rgba(255,255,255,0.15); }
+
+    .plan-card {
+      background: var(--clr-white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-xl);
+      border: 2px solid var(--clr-border);
+      transition: border-color var(--transition), box-shadow var(--transition);
+      text-align: center;
+      position: relative;
+    }
+    .plan-card:hover { border-color: var(--clr-accent); box-shadow: var(--shadow-md); }
+    .plan-card.popular { border-color: var(--clr-accent); box-shadow: var(--shadow-md); }
+    .plan-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--clr-accent);
+      color: var(--clr-white);
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      padding: 0.3em 1em;
+      border-radius: var(--radius-pill);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .plan-price {
+      font-size: var(--fs-3xl);
+      font-family: var(--ff-heading);
+      color: var(--clr-espresso);
+      line-height: 1;
+      margin: var(--space-md) 0 var(--space-xs);
+    }
+    .plan-price span { font-size: var(--fs-sm); color: var(--clr-muted); font-family: var(--ff-body); }
+    .plan-features { list-style: none; text-align: left; margin: var(--space-lg) 0; }
+    .plan-features li {
+      padding: var(--space-sm) 0;
+      border-bottom: 1px solid var(--clr-border);
+      font-size: var(--fs-sm);
+      display: flex;
+      gap: var(--space-sm);
+    }
+    .plan-features li:last-child { border-bottom: none; }
+    .plan-features .yes { color: var(--clr-green); font-weight: 700; }
+    .plan-features .no  { color: #bbb; }
+
+    .process-step {
+      display: flex;
+      gap: var(--space-xl);
+      align-items: flex-start;
+      margin-bottom: var(--space-xl);
+      padding: var(--space-xl);
+      background: var(--clr-white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+    .process-num {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--clr-accent);
+      color: var(--clr-white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--ff-heading);
+      font-size: var(--fs-xl);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    @media (max-width: 600px) { .process-step { flex-direction: column; } }
+
+    .submission-box {
+      background: var(--clr-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: var(--space-2xl);
+    }
+    @media (max-width: 600px) { .submission-box { padding: var(--space-xl) var(--space-lg); } }
+
+    .form-section-heading {
+      margin: var(--space-xl) 0 var(--space-lg);
+      padding-bottom: var(--space-sm);
+      border-bottom: 2px solid var(--clr-border);
+      font-size: var(--fs-base);
+      font-family: var(--ff-body);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--clr-muted);
+    }
+    .form-section-heading:first-of-type { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <span class="nav-logo-mark"></span>
+        <span class="nav-logo-text">Café<span>Find</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="Owners.html" class="active">For Owners</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="btn btn-secondary btn-sm">Log In</a>
+        <a href="account.html" class="btn btn-primary btn-sm">Sign Up</a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- Owner Hero -->
+    <section class="owner-hero">
+      <div class="container">
+        <div class="grid-2" style="align-items:center; gap:var(--space-2xl);">
+          <div>
+            <span class="hero-eyebrow">For Café Owners</span>
+            <h1>Grow Your Café with CaféFind</h1>
+            <p>Join over 1,200 cafés already listed on the UK's fastest-growing café discovery platform. Reach thousands of coffee lovers every month — for free.</p>
+            <div style="display:flex; gap:var(--space-md); flex-wrap:wrap;">
+              <a href="#submit" class="btn btn-primary btn-lg">List My Café Free</a>
+              <a href="#benefits" class="btn btn-secondary btn-lg" style="border-color:rgba(255,255,255,0.5); color:var(--clr-white);">See Benefits</a>
+            </div>
+          </div>
+          <div class="grid-2" style="gap:var(--space-md);">
+            <div class="hero-card">
+              <div class="hero-card-bar"></div>
+              <h4>More Footfall</h4>
+              <p>Connect with coffee lovers actively searching for their next café.</p>
+            </div>
+            <div class="hero-card">
+              <div class="hero-card-bar"></div>
+              <h4>Build Reputation</h4>
+              <p>Collect verified reviews and build trust with new customers.</p>
+            </div>
+            <div class="hero-card">
+              <div class="hero-card-bar"></div>
+              <h4>Free to List</h4>
+              <p>Basic listing is always free — no credit card required.</p>
+            </div>
+            <div class="hero-card">
+              <div class="hero-card-bar"></div>
+              <h4>Performance Insights</h4>
+              <p>Track profile views and understand what drives customers to you.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Benefits -->
+    <section class="section section--white" id="benefits">
+      <div class="container">
+        <div class="text-center section-header">
+          <span class="card-tag">Why CaféFind?</span>
+          <h2 class="section-title">Benefits of Joining</h2>
+          <p class="section-sub">Everything you need to attract and retain loyal customers.</p>
+        </div>
+        <div class="grid-3">
+          <div class="benefit-card">
+            <div class="benefit-num">01</div>
+            <h4>Discoverability</h4>
+            <p>Appear in filtered searches for customers looking for exactly what you offer — fast Wi-Fi, quiet seating, or vegan menus.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-num">02</div>
+            <h4>Rich Profile Page</h4>
+            <p>Showcase your café with photos, opening hours, amenities, a menu summary, and your unique story.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-num">03</div>
+            <h4>Customer Reviews</h4>
+            <p>Real, verified reviews from genuine visitors build social proof and encourage new customers through the door.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-num">04</div>
+            <h4>Mobile-Ready</h4>
+            <p>CaféFind is optimised for mobile — customers can find you on the go, right when they are looking.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-num">05</div>
+            <h4>Owner Dashboard</h4>
+            <p>Pro members get access to profile view stats, review summaries, and customer engagement insights.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-num">06</div>
+            <h4>Student Audience</h4>
+            <p>Our platform is popular with students and remote workers — a high-value, repeat-visit audience for cafés.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="section section--cream" id="pricing">
+      <div class="container">
+        <div class="text-center section-header">
+          <span class="card-tag">Pricing</span>
+          <h2 class="section-title">Simple, Transparent Plans</h2>
+          <p class="section-sub">Start free, upgrade when you are ready.</p>
+        </div>
+        <div class="grid-3">
+          <div class="plan-card">
+            <h3>Basic</h3>
+            <div class="plan-price">Free <span>/ forever</span></div>
+            <p style="font-size:var(--fs-sm); color:var(--clr-muted);">Get listed and be discovered.</p>
+            <ul class="plan-features">
+              <li><span class="yes">Yes</span> Standard listing page</li>
+              <li><span class="yes">Yes</span> Amenity badges</li>
+              <li><span class="yes">Yes</span> Customer reviews</li>
+              <li><span class="yes">Yes</span> Search visibility</li>
+              <li><span class="no">—</span> Featured placement</li>
+              <li><span class="no">—</span> Analytics dashboard</li>
+              <li><span class="no">—</span> Photo gallery</li>
+            </ul>
+            <a href="#submit" class="btn btn-secondary btn-block">Get Started Free</a>
+          </div>
+          <div class="plan-card popular">
+            <div class="plan-badge">Most Popular</div>
+            <h3>Pro</h3>
+            <div class="plan-price">£9 <span>/ month</span></div>
+            <p style="font-size:var(--fs-sm); color:var(--clr-muted);">Stand out from the crowd.</p>
+            <ul class="plan-features">
+              <li><span class="yes">Yes</span> Everything in Basic</li>
+              <li><span class="yes">Yes</span> Featured placement</li>
+              <li><span class="yes">Yes</span> Analytics dashboard</li>
+              <li><span class="yes">Yes</span> Photo gallery (up to 20)</li>
+              <li><span class="yes">Yes</span> Priority support</li>
+              <li><span class="no">—</span> Homepage feature slot</li>
+            </ul>
+            <a href="#submit" class="btn btn-primary btn-block">Start Pro Trial</a>
+          </div>
+          <div class="plan-card">
+            <h3>Premium</h3>
+            <div class="plan-price">£24 <span>/ month</span></div>
+            <p style="font-size:var(--fs-sm); color:var(--clr-muted);">Maximum exposure for your café.</p>
+            <ul class="plan-features">
+              <li><span class="yes">Yes</span> Everything in Pro</li>
+              <li><span class="yes">Yes</span> Homepage feature slot</li>
+              <li><span class="yes">Yes</span> Unlimited photos</li>
+              <li><span class="yes">Yes</span> Dedicated account manager</li>
+              <li><span class="yes">Yes</span> Social media mention</li>
+            </ul>
+            <a href="contact.html" class="btn btn-dark btn-block">Contact Us</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How Registration Works -->
+    <section class="section section--white">
+      <div class="container">
+        <div class="text-center section-header">
+          <span class="card-tag">Getting Started</span>
+          <h2 class="section-title">How Registration Works</h2>
+          <p class="section-sub">Listed and live in under 24 hours.</p>
+        </div>
+        <div style="max-width:720px; margin:0 auto;">
+          <div class="process-step">
+            <div class="process-num">1</div>
+            <div>
+              <h4>Submit Your Café Details</h4>
+              <p style="color:var(--clr-muted); margin:0;">Fill in the submission form with your café name, address, opening hours, and amenities. It takes about 5 minutes.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="process-num">2</div>
+            <div>
+              <h4>We Verify Your Listing</h4>
+              <p style="color:var(--clr-muted); margin:0;">Our team reviews your submission to confirm details and ensure quality. Most listings are approved within 24 hours.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="process-num">3</div>
+            <div>
+              <h4>Go Live and Get Discovered</h4>
+              <p style="color:var(--clr-muted); margin:0;">Your café appears in search results immediately after approval. You will receive an email with your owner login to manage your profile.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="process-num">4</div>
+            <div>
+              <h4>Manage and Grow</h4>
+              <p style="color:var(--clr-muted); margin:0;">Update your profile any time, respond to reviews, and optionally upgrade to Pro to unlock analytics and featured placement.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Café Submission Form -->
+    <section class="section section--cream" id="submit">
+      <div class="container">
+        <div class="text-center section-header">
+          <span class="card-tag">Get Listed</span>
+          <h2 class="section-title">Submit Your Café</h2>
+          <p class="section-sub">Free to list. No credit card required. Live within 24 hours.</p>
+        </div>
+
+        <div class="submission-box" style="max-width:800px; margin:0 auto;">
+          <form action="#" method="post" novalidate>
+
+            <p class="form-section-heading">Café Details</p>
+            <div class="form-group">
+              <label for="cafe-name">Café Name <span style="color:var(--clr-accent);">*</span></label>
+              <input type="text" id="cafe-name" name="cafe_name" placeholder="e.g. The Roasted Bean" required />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cafe-type">Café Type <span style="color:var(--clr-accent);">*</span></label>
+                <select id="cafe-type" name="cafe_type" required>
+                  <option value="">— Select type —</option>
+                  <option>Independent</option>
+                  <option>Artisan / Specialty</option>
+                  <option>Bakery Café</option>
+                  <option>Bookshop Café</option>
+                  <option>Vegan / Plant-based</option>
+                  <option>Chain / Franchise</option>
+                  <option>Pop-up</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="cafe-price">Price Range <span style="color:var(--clr-accent);">*</span></label>
+                <select id="cafe-price" name="price_range" required>
+                  <option value="">— Select range —</option>
+                  <option>Budget — under £5</option>
+                  <option>Mid-range — £5 to £10</option>
+                  <option>Premium — £10 and above</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="cafe-desc">Café Description <span style="color:var(--clr-accent);">*</span></label>
+              <textarea id="cafe-desc" name="description" rows="4"
+                placeholder="Tell potential customers what makes your café special..." required></textarea>
+              <span class="form-hint">Max 300 words. Focus on your unique character, speciality drinks, and atmosphere.</span>
+            </div>
+
+            <p class="form-section-heading">Location</p>
+            <div class="form-group">
+              <label for="cafe-address">Street Address <span style="color:var(--clr-accent);">*</span></label>
+              <input type="text" id="cafe-address" name="address" placeholder="e.g. 14 Cotton Street" required />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cafe-city">City <span style="color:var(--clr-accent);">*</span></label>
+                <select id="cafe-city" name="city" required>
+                  <option value="">— Select city —</option>
+                  <option>London</option>
+                  <option>Manchester</option>
+                  <option>Bristol</option>
+                  <option>Edinburgh</option>
+                  <option>Birmingham</option>
+                  <option>Leeds</option>
+                  <option>Brighton</option>
+                  <option>Oxford</option>
+                  <option>Cambridge</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="cafe-postcode">Postcode <span style="color:var(--clr-accent);">*</span></label>
+                <input type="text" id="cafe-postcode" name="postcode" placeholder="e.g. M4 5BF" required />
+              </div>
+            </div>
+
+            <p class="form-section-heading">Opening Hours</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="hours-weekday">Monday – Friday</label>
+                <input type="text" id="hours-weekday" name="hours_weekday" placeholder="e.g. 7am – 7pm" />
+              </div>
+              <div class="form-group">
+                <label for="hours-weekend">Saturday – Sunday</label>
+                <input type="text" id="hours-weekend" name="hours_weekend" placeholder="e.g. 8am – 6pm" />
+              </div>
+            </div>
+
+            <p class="form-section-heading">Amenities</p>
+            <div class="grid-3" style="margin-bottom:var(--space-xl);">
+              <label class="form-check"><input type="checkbox" name="amenity" value="wifi" /> Free Wi-Fi</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="outlets" /> Power Outlets</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="outdoor" /> Outdoor Seating</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="pet" /> Pet Friendly</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="accessible" /> Wheelchair Accessible</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="parking" /> Parking Nearby</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="quiet" /> Quiet Zone</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="group" /> Group Tables</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="vegan" /> Vegan Options</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="student" /> Student Discount</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="takeaway" /> Takeaway Available</label>
+              <label class="form-check"><input type="checkbox" name="amenity" value="late" /> Open Past 8pm</label>
+            </div>
+
+            <p class="form-section-heading">Menu Items <span style="font-weight:400; text-transform:none; letter-spacing:normal; color:var(--clr-muted);">(add a few highlights — you can add more after your listing is approved)</span></p>
+            <div class="menu-item-row">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="menu-item-1">Item Name</label>
+                <input type="text" id="menu-item-1" name="menu_item[]" placeholder="e.g. Flat White" />
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="menu-price-1">Price</label>
+                <input type="text" id="menu-price-1" name="menu_price[]" placeholder="e.g. £3.40" />
+              </div>
+            </div>
+            <div class="menu-item-row">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="menu-item-2">Item Name</label>
+                <input type="text" id="menu-item-2" name="menu_item[]" placeholder="e.g. Almond Croissant" />
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="menu-price-2">Price</label>
+                <input type="text" id="menu-price-2" name="menu_price[]" placeholder="e.g. £3.10" />
+              </div>
+            </div>
+            <div class="menu-item-row" style="margin-bottom:var(--space-xl);">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="menu-item-3">Item Name</label>
+                <input type="text" id="menu-item-3" name="menu_item[]" placeholder="e.g. Avocado Toast" />
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="menu-price-3">Price</label>
+                <input type="text" id="menu-price-3" name="menu_price[]" placeholder="e.g. £6.50" />
+              </div>
+            </div>
+
+            <p class="form-section-heading">Your Contact Details</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="owner-name">Your Name <span style="color:var(--clr-accent);">*</span></label>
+                <input type="text" id="owner-name" name="owner_name" placeholder="Full name" required />
+              </div>
+              <div class="form-group">
+                <label for="owner-role">Your Role</label>
+                <input type="text" id="owner-role" name="owner_role" placeholder="e.g. Owner, Manager" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="owner-email">Email Address <span style="color:var(--clr-accent);">*</span></label>
+                <input type="email" id="owner-email" name="owner_email" placeholder="you@example.com" required />
+              </div>
+              <div class="form-group">
+                <label for="owner-phone">Phone Number</label>
+                <input type="tel" id="owner-phone" name="owner_phone" placeholder="e.g. 0161 234 5678" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="cafe-website">Café Website or Social Media</label>
+              <input type="url" id="cafe-website" name="website" placeholder="https://www.yourcafe.com" />
+            </div>
+            <div class="form-group">
+              <label for="plan-select">Listing Plan</label>
+              <select id="plan-select" name="plan">
+                <option value="basic">Basic – Free</option>
+                <option value="pro">Pro – £9 / month</option>
+                <option value="premium">Premium – £24 / month</option>
+              </select>
+            </div>
+            <label class="form-check" style="margin-bottom:var(--space-xl);">
+              <input type="checkbox" name="terms" required />
+              <span style="font-size:var(--fs-sm);">
+                I confirm this café information is accurate and I agree to the
+                <a href="#">CaféFind Terms of Service</a> and <a href="#">Owner Guidelines</a>.
+              </span>
+            </label>
+
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Submit Café for Review</button>
+            <p style="text-align:center; color:var(--clr-muted); font-size:var(--fs-sm); margin-top:var(--space-md);">
+              You will receive a confirmation email within 24 hours. No payment is required for the Basic plan.
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Owner Testimonials -->
+    <section class="section section--espresso">
+      <div class="container">
+        <div class="text-center section-header">
+          <h2 style="color:var(--clr-white); margin-bottom:var(--space-sm);">What Owners Say</h2>
+          <p style="color:var(--clr-muted-dark);">Real results from real café owners.</p>
+        </div>
+        <div class="grid-3">
+          <div class="testimonial">
+            <p>"We went from 10 reviews to 80 in the first two months. The student crowd from CaféFind has become our most loyal base."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">EK</div>
+              <div class="author-info">
+                <strong>Elena K.</strong>
+                <span>Owner, Green Grounds, Manchester</span>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial">
+            <p>"Listing on CaféFind was the best marketing decision we made this year. Simple, free, and it actually drives footfall."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">DO</div>
+              <div class="author-info">
+                <strong>David O.</strong>
+                <span>Owner, Page &amp; Perk, Didsbury</span>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial">
+            <p>"The Pro plan analytics showed us our busiest search days. We now run Tuesday specials and it has made a real difference."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">AN</div>
+              <div class="author-info">
+                <strong>Amara N.</strong>
+                <span>Owner, Crème &amp; Crumble, Ancoats</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="nav-logo">
+            <span class="nav-logo-mark"></span>
+            <span class="nav-logo-text">Café<span>Find</span></span>
+          </a>
+          <p>Connecting coffee lovers with the cafés they will adore — one cup at a time.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Explore</h5>
+          <ul>
+            <li><a href="search.html">Search Cafés</a></li>
+            <li><a href="listings.html">Browse Listings</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Account</h5>
+          <ul>
+            <li><a href="account.html">Create Account</a></li>
+            <li><a href="login.html">Log In</a></li>
+            <li><a href="Owners.html">Owner Portal</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Support</h5>
+          <ul>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="contact.html#faq">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 CaféFind. All rights reserved.</span>
+        <span>Crafted for coffee lovers everywhere.</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

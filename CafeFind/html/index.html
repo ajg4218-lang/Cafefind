@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CaféFind – Discover Your Perfect Café</title>
+  <!-- Google Font: Lato -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <!-- Firebase — nav auth-state observer only (public page, no auth guard) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <span class="nav-logo-mark"></span>
+        <span class="nav-logo-text">Café<span>Find</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="btn btn-secondary btn-sm">Log In</a>
+        <a href="account.html" class="btn btn-primary btn-sm">Sign Up</a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-inner">
+          <div class="hero-content">
+            <span class="hero-eyebrow">Café Discovery Platform</span>
+            <h1>Discover <span>Cafés</span> You Will Love</h1>
+            <p class="hero-sub">
+              CaféFind helps students, remote workers, and coffee lovers find the
+              perfect café — filtered by Wi-Fi, price, seating, vibe, and more.
+            </p>
+            <div class="hero-actions">
+              <a href="search.html" class="btn btn-primary btn-lg">Search Cafés</a>
+              <a href="listings.html" class="btn btn-secondary btn-lg">Browse All</a>
+            </div>
+          </div>
+
+          <div class="hero-visual">
+            <div class="hero-card">
+              <div class="hero-card-bar"></div>
+              <h4>The Roasted Bean</h4>
+              <p>Northern Quarter · Free Wi-Fi · Study-friendly</p>
+            </div>
+            <div class="hero-card">
+              <div class="hero-card-bar"></div>
+              <h4>Study &amp; Sip</h4>
+              <p>Quiet zone · Power outlets · Unlimited refills</p>
+            </div>
+            <div class="hero-card">
+              <div class="hero-card-bar"></div>
+              <h4>Green Grounds</h4>
+              <p>Outdoor seating · Plant-based options · Calm atmosphere</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- What is CaféFind? -->
+    <section class="section section--white">
+      <div class="container">
+        <div class="grid-2" style="align-items:center; gap:4rem;">
+          <div>
+            <span class="card-tag">About CaféFind</span>
+            <h2 class="section-title">What is CaféFind?</h2>
+            <p>
+              CaféFind is a free, community-powered directory that connects café-goers
+              with their ideal coffee shop. Whether you need reliable Wi-Fi for a
+              deadline, a quiet nook to read, or a lively spot to catch up with friends —
+              we have you covered.
+            </p>
+            <p>
+              We gather honest reviews, up-to-date amenity information, and curated
+              recommendations so you can stop guessing and start visiting. No ads, no
+              sponsored rankings — just real cafés for real people.
+            </p>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1.5rem;">
+              <a href="search.html" class="btn btn-primary">Find a Café</a>
+              <a href="listings.html" class="btn btn-secondary">See What is Listed</a>
+            </div>
+          </div>
+          <div class="grid-2" style="gap:1rem;">
+            <div class="benefit-card">
+              <div class="benefit-num">01</div>
+              <h4>Smart Search</h4>
+              <p>Filter by location, price, amenities, and café type.</p>
+            </div>
+            <div class="benefit-card">
+              <div class="benefit-num">02</div>
+              <h4>Verified Reviews</h4>
+              <p>Real ratings from real visitors, not bots.</p>
+            </div>
+            <div class="benefit-card">
+              <div class="benefit-num">03</div>
+              <h4>Local Focus</h4>
+              <p>Discover hidden gems in your neighbourhood.</p>
+            </div>
+            <div class="benefit-card">
+              <div class="benefit-num">04</div>
+              <h4>Always Free</h4>
+              <p>Free to search, browse, and create an account.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- At a Glance -->
+    <section class="section section--cream">
+      <div class="container text-center">
+        <span class="card-tag">By the Numbers</span>
+        <h2 class="section-title">CaféFind at a Glance</h2>
+        <p class="section-sub">Growing every day, one cup at a time.</p>
+        <div class="grid-4">
+          <div class="stat-card">
+            <div class="stat-accent"></div>
+            <div class="stat-num">1,200+</div>
+            <div class="stat-label">Cafés Listed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-accent"></div>
+            <div class="stat-num">8,500+</div>
+            <div class="stat-label">Registered Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-accent"></div>
+            <div class="stat-num">14,000+</div>
+            <div class="stat-label">Reviews Written</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-accent"></div>
+            <div class="stat-num">40+</div>
+            <div class="stat-label">Cities Covered</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Getting Started -->
+    <section class="section section--white">
+      <div class="container">
+        <div class="text-center section-header">
+          <span class="card-tag">How It Works</span>
+          <h2 class="section-title">Getting Started in 3 Easy Steps</h2>
+          <p class="section-sub">You will be at your perfect café in minutes.</p>
+        </div>
+        <div style="max-width:680px; margin:0 auto;" class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Create Your Free Account</h4>
+              <p>Sign up in under a minute. Set your preferences — vibe, price range,
+                 must-have amenities — and let CaféFind tailor results to you.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Search or Use the Match Wizard</h4>
+              <p>Type a location or café name, or try our Recommendation Wizard.
+                 Answer a few quick questions and we will suggest the best matches.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Visit, Review and Save Favourites</h4>
+              <p>Head to your chosen café, leave an honest review, and save it to your
+                 personal list so you can find it again quickly.</p>
+            </div>
+          </div>
+        </div>
+        <div class="text-center" style="margin-top:2rem;">
+          <a href="account.html" class="btn btn-primary btn-lg">Create Free Account</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section section--cream">
+      <div class="container">
+        <div class="text-center section-header">
+          <span class="card-tag">What People Say</span>
+          <h2 class="section-title">Trusted by Café-Goers</h2>
+          <p class="section-sub">Don't take our word for it.</p>
+        </div>
+        <div class="grid-3">
+          <div class="testimonial">
+            <p>"I found my go-to study café within five minutes of signing up.
+               The Wi-Fi filter alone saved me so much time."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">PS</div>
+              <div class="author-info">
+                <strong>Priya S.</strong>
+                <span>University Student, Bristol</span>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial">
+            <p>"As a freelance designer, I work from cafés every day.
+               CaféFind's power-outlet filter is genuinely useful."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">MT</div>
+              <div class="author-info">
+                <strong>Marcus T.</strong>
+                <span>Freelance Designer, Manchester</span>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial">
+            <p>"We listed our café on CaféFind last month and already have
+               dozens of new regulars. It works for small businesses."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">EK</div>
+              <div class="author-info">
+                <strong>Elena K.</strong>
+                <span>Café Owner, Edinburgh</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section section--espresso">
+      <div class="container text-center">
+        <h2 style="color:var(--clr-white); margin-bottom:var(--space-sm);">
+          Ready to Find Your Perfect Café?
+        </h2>
+        <p style="color:var(--clr-muted-dark); margin-bottom:var(--space-xl); font-size:var(--fs-md);">
+          Search by location, explore curated listings, or list your own café today.
+        </p>
+        <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+          <a href="search.html" class="btn btn-primary btn-lg">Search Cafés</a>
+          <a href="listings.html" class="btn btn-secondary btn-lg">Browse Cafés</a>
+          <a href="Owners.html" class="btn btn-dark btn-lg">List Your Café</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="nav-logo">
+            <span class="nav-logo-mark"></span>
+            <span class="nav-logo-text">Café<span>Find</span></span>
+          </a>
+          <p>Connecting coffee lovers with the cafés they will adore — one cup at a time.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Explore</h5>
+          <ul>
+            <li><a href="search.html">Search Cafés</a></li>
+            <li><a href="listings.html">Browse Listings</a></li>
+            <li><a href="listings.html#featured">Featured Cafés</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Account</h5>
+          <ul>
+            <li><a href="account.html">Create Account</a></li>
+            <li><a href="login.html">Log In</a></li>
+            <li><a href="Owners.html">Owner Portal</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Support</h5>
+          <ul>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="contact.html#faq">FAQ</a></li>
+            <li><a href="Owners.html">List Your Café</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 CaféFind. All rights reserved.</span>
+        <span>Crafted for coffee lovers everywhere.</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

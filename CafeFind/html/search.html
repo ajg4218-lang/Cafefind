@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Cafés – CaféFind</title>
+  <!-- Google Font: Lato -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+  <!-- Firebase auth guard — redirects to login.html if not signed in -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth.js"></script>
+  <style>
+    .search-hero {
+      background: linear-gradient(135deg, var(--clr-espresso), var(--clr-roast));
+      padding: var(--space-2xl) 0 var(--space-xl);
+      text-align: center;
+      color: var(--clr-cream);
+    }
+    .search-hero h1 { color: var(--clr-white); margin-bottom: var(--space-sm); }
+    .search-hero p  { color: var(--clr-muted-dark); margin-bottom: var(--space-xl); font-size: var(--fs-md); }
+
+    .search-bar-large {
+      display: flex;
+      background: var(--clr-white);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      max-width: 740px;
+      margin: 0 auto;
+    }
+    .search-bar-large input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 1em 1.5em;
+      font-size: var(--fs-md);
+      font-family: var(--ff-body);
+      color: var(--clr-text);
+      background: transparent;
+    }
+    .search-bar-large input::placeholder { color: var(--clr-muted); }
+    .search-bar-large select {
+      border: none;
+      border-left: 2px solid var(--clr-border);
+      outline: none;
+      padding: 0.8em 1em;
+      font-size: var(--fs-sm);
+      font-family: var(--ff-body);
+      color: var(--clr-text);
+      background: var(--clr-foam);
+      cursor: pointer;
+    }
+    .search-bar-large button {
+      background: var(--clr-accent);
+      color: var(--clr-white);
+      border: none;
+      padding: 0.9em 2em;
+      font-size: var(--fs-base);
+      font-weight: 700;
+      font-family: var(--ff-body);
+      cursor: pointer;
+      border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
+      transition: background var(--transition);
+      letter-spacing: 0.02em;
+    }
+    .search-bar-large button:hover { background: var(--clr-accent-dk); }
+
+    .popular-tags { margin-top: var(--space-lg); }
+    .popular-tags span {
+      font-size: var(--fs-sm);
+      color: var(--clr-muted-dark);
+      margin-right: var(--space-sm);
+    }
+    .popular-tags a {
+      display: inline-block;
+      background: rgba(255,255,255,0.12);
+      color: var(--clr-cream);
+      font-size: var(--fs-xs);
+      padding: 0.3em 0.85em;
+      border-radius: var(--radius-pill);
+      margin: 0.2em;
+      transition: background var(--transition);
+      border: 1px solid rgba(255,255,255,0.2);
+      font-weight: 500;
+      letter-spacing: 0.03em;
+    }
+    .popular-tags a:hover { background: rgba(255,255,255,0.22); text-decoration: none; }
+
+    .search-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: var(--space-xl);
+      align-items: start;
+    }
+    @media (max-width: 900px) { .search-layout { grid-template-columns: 1fr; } }
+
+    .result-card {
+      display: flex;
+      gap: var(--space-lg);
+      background: var(--clr-white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: box-shadow var(--transition), transform var(--transition);
+      margin-bottom: var(--space-lg);
+    }
+    .result-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .result-card-img {
+      width: 160px;
+      min-height: 140px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--clr-cream), var(--clr-latte-lt));
+      border-right: 1px solid var(--clr-border);
+    }
+    .result-card-img-inner {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--clr-border);
+      border: 2px solid var(--clr-latte);
+    }
+    .result-card-body {
+      padding: var(--space-lg) var(--space-lg) var(--space-lg) 0;
+      flex: 1;
+    }
+    .result-card-body h4 { margin-bottom: var(--space-xs); }
+    .result-card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      font-size: var(--fs-sm);
+      color: var(--clr-muted);
+      margin-bottom: var(--space-sm);
+    }
+    @media (max-width: 600px) {
+      .result-card { flex-direction: column; }
+      .result-card-img { width: 100%; height: 120px; min-height: unset; border-right: none; border-bottom: 1px solid var(--clr-border); }
+      .result-card-body { padding: var(--space-md); }
+    }
+
+    .wizard-box {
+      background: var(--clr-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: var(--space-xl) var(--space-2xl);
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    @media (max-width: 600px) {
+      .wizard-box { padding: var(--space-xl) var(--space-lg); }
+    }
+    .wizard-step { display: none; }
+    .wizard-step.active { display: block; }
+    .wizard-progress { display: flex; gap: var(--space-sm); margin-bottom: var(--space-xl); }
+    .wizard-dot {
+      flex: 1;
+      height: 5px;
+      background: var(--clr-border);
+      border-radius: var(--radius-pill);
+      transition: background var(--transition);
+    }
+    .wizard-dot.done { background: var(--clr-accent); }
+
+    .wizard-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-md);
+      margin: var(--space-lg) 0;
+    }
+    @media (max-width: 560px) { .wizard-options { grid-template-columns: repeat(2, 1fr); } }
+    .wizard-opt {
+      border: 2px solid var(--clr-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg) var(--space-md);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .wizard-opt:hover { border-color: var(--clr-latte); background: var(--clr-foam); }
+    .wizard-opt input[type="radio"],
+    .wizard-opt input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    /* Decorative line replaces emoji icon */
+    .wizard-opt-bar {
+      width: 24px;
+      height: 3px;
+      background: var(--clr-latte);
+      border-radius: 2px;
+      margin: 0 auto var(--space-sm);
+    }
+    .wizard-opt-label { font-size: var(--fs-sm); font-weight: 600; display: block; color: var(--clr-espresso); }
+
+    /* ── Google Maps section ───────────────────────────────── */
+    .map-section {
+      background: var(--clr-foam);
+      padding: var(--space-xl) 0;
+      border-bottom: 1px solid var(--clr-border);
+    }
+    .map-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+    .map-section-header h2 {
+      font-size: var(--fs-lg);
+      margin: 0;
+      color: var(--clr-espresso);
+    }
+    .map-status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: var(--fs-sm);
+      color: var(--clr-muted);
+      background: var(--clr-white);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-pill);
+      padding: 0.35em 0.9em;
+    }
+    .map-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--clr-border);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .map-status-dot.locating  { background: var(--clr-latte); }
+    .map-status-dot.located   { background: var(--clr-green); }
+    .map-status-dot.denied    { background: var(--clr-accent); }
+    #cafe-map {
+      width: 100%;
+      height: 420px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--clr-border);
+      background: var(--clr-latte-lt);
+      /* overflow:hidden removed — it clips the Google Maps internal DOM
+         and prevents map tiles from rendering. The border-radius still
+         applies visually via the container's own box. */
+    }
+    .map-notice {
+      margin-top: var(--space-md);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-sm);
+      display: none;
+    }
+    .map-notice.show { display: block; }
+    .map-notice--warn {
+      background: #fff8e1;
+      border-left: 3px solid #f5a623;
+      color: #7a5c00;
+    }
+    .map-notice--error {
+      background: var(--clr-accent-lt);
+      border-left: 3px solid var(--clr-accent);
+      color: var(--clr-accent-dk);
+    }
+
+    /* ── Nearby results ─────────────────────────────────────── */
+
+    /* Photo thumbnail replacing the placeholder inner circle */
+    .result-card-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Open / Closed badge */
+    .badge-open   { background: #d4edda; color: #155724; font-size: var(--fs-xs); font-weight: 700; padding: 0.2em 0.6em; border-radius: var(--radius-pill); }
+    .badge-closed { background: var(--clr-accent-lt); color: var(--clr-accent-dk); font-size: var(--fs-xs); font-weight: 700; padding: 0.2em 0.6em; border-radius: var(--radius-pill); }
+
+    /* Loading skeleton */
+    .skeleton-card {
+      display: flex;
+      gap: var(--space-lg);
+      background: var(--clr-white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: var(--space-lg);
+      min-height: 140px;
+    }
+    .skeleton-img {
+      width: 160px;
+      flex-shrink: 0;
+      background: linear-gradient(90deg, var(--clr-border) 25%, var(--clr-latte-lt) 50%, var(--clr-border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    .skeleton-body { flex: 1; padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-sm); }
+    .skeleton-line {
+      height: 14px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(90deg, var(--clr-border) 25%, var(--clr-latte-lt) 50%, var(--clr-border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    .skeleton-line--title { height: 18px; width: 55%; }
+    .skeleton-line--meta  { width: 80%; }
+    .skeleton-line--text  { width: 95%; }
+    .skeleton-line--text2 { width: 70%; }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* Empty / error state inside results column */
+    .nearby-empty {
+      background: var(--clr-white);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-2xl) var(--space-xl);
+      text-align: center;
+      color: var(--clr-muted);
+      margin-bottom: var(--space-lg);
+    }
+    .nearby-empty strong { display: block; color: var(--clr-espresso); font-size: var(--fs-md); margin-bottom: var(--space-sm); }
+
+    /* Results count bar */
+    #nearby-count-bar { display: none; }
+    #nearby-count-bar.visible { display: flex; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <span class="nav-logo-mark"></span>
+        <span class="nav-logo-text">Café<span>Find</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="search.html" class="active">Search</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="btn btn-secondary btn-sm">Log In</a>
+        <a href="account.html" class="btn btn-primary btn-sm">Sign Up</a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- Search Hero -->
+    <section class="search-hero">
+      <div class="container">
+        <h1>Find Your Perfect Café</h1>
+        <p>Search by name, neighbourhood, city, or postcode.</p>
+        <form action="#" method="get" novalidate>
+          <div class="search-bar-large">
+            <input type="text" name="q"
+              placeholder="Search cafés, areas, or postcodes..."
+              aria-label="Search cafés" />
+            <select name="city" aria-label="Select city">
+              <option value="">All Cities</option>
+              <option>London</option>
+              <option>Manchester</option>
+              <option>Bristol</option>
+              <option>Edinburgh</option>
+              <option>Birmingham</option>
+              <option>Leeds</option>
+              <option>Brighton</option>
+              <option>Oxford</option>
+              <option>Cambridge</option>
+            </select>
+            <button type="submit">Search</button>
+          </div>
+        </form>
+        <div class="popular-tags">
+          <span>Popular:</span>
+          <a href="#">Quiet Study</a>
+          <a href="#">Outdoor Seating</a>
+          <a href="#">Pet Friendly</a>
+          <a href="#">Vegan Menu</a>
+          <a href="#">Late Night</a>
+          <a href="#">Free Wi-Fi</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Google Map -->
+    <section class="map-section">
+      <div class="container">
+        <div class="map-section-header">
+          <h2>Cafés Near You</h2>
+          <span class="map-status" id="mapStatus">
+            <span class="map-status-dot" id="mapStatusDot"></span>
+            <span id="mapStatusText">Waiting for location…</span>
+          </span>
+        </div>
+        <div id="cafe-map" role="region" aria-label="Map showing cafés near your location"></div>
+        <div class="map-notice map-notice--warn" id="mapNoticeDenied">
+          Location access was denied. Enable location permissions in your browser settings,
+          or use the search bar above to find cafés by postcode or city.
+        </div>
+        <div class="map-notice map-notice--error" id="mapNoticeError">
+          Unable to retrieve your location. Please try refreshing the page or search manually above.
+        </div>
+      </div>
+    </section>
+
+    <!-- Search + Filters -->
+    <section class="section section--cream">
+      <div class="container">
+        <div class="search-layout">
+
+          <!-- Filter Panel -->
+          <aside>
+            <div class="filter-panel">
+              <h3>Filters</h3>
+
+              <div class="filter-section">
+                <h5>Location</h5>
+                <div class="form-group" style="margin-bottom:var(--space-sm);">
+                  <input type="text" placeholder="Enter postcode or area" />
+                </div>
+                <div class="form-group">
+                  <select aria-label="Distance radius">
+                    <option>Within 0.5 miles</option>
+                    <option selected>Within 1 mile</option>
+                    <option>Within 3 miles</option>
+                    <option>Within 5 miles</option>
+                    <option>Any distance</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="filter-section">
+                <h5>Price Range</h5>
+                <label class="form-check"><input type="checkbox" name="price" value="1" checked /> Budget (£)</label>
+                <label class="form-check"><input type="checkbox" name="price" value="2" checked /> Mid-range (££)</label>
+                <label class="form-check"><input type="checkbox" name="price" value="3" /> Premium (£££)</label>
+              </div>
+
+              <div class="filter-section">
+                <h5>Amenities</h5>
+                <label class="form-check"><input type="checkbox" name="wifi" checked /> Free Wi-Fi</label>
+                <label class="form-check"><input type="checkbox" name="outlets" checked /> Power Outlets</label>
+                <label class="form-check"><input type="checkbox" name="outdoor" /> Outdoor Seating</label>
+                <label class="form-check"><input type="checkbox" name="pet" /> Pet Friendly</label>
+                <label class="form-check"><input type="checkbox" name="parking" /> Parking Nearby</label>
+                <label class="form-check"><input type="checkbox" name="accessible" /> Wheelchair Accessible</label>
+              </div>
+
+              <div class="filter-section">
+                <h5>Seating</h5>
+                <label class="form-check"><input type="checkbox" name="seat_quiet" checked /> Quiet / Study Zone</label>
+                <label class="form-check"><input type="checkbox" name="seat_group" /> Group Tables</label>
+                <label class="form-check"><input type="checkbox" name="seat_sofa" /> Sofas / Armchairs</label>
+                <label class="form-check"><input type="checkbox" name="seat_bar" /> Bar / Counter Seating</label>
+              </div>
+
+              <div class="filter-section">
+                <h5>Café Type</h5>
+                <label class="form-check"><input type="checkbox" name="type" value="indie" checked /> Independent</label>
+                <label class="form-check"><input type="checkbox" name="type" value="artisan" /> Artisan / Specialty</label>
+                <label class="form-check"><input type="checkbox" name="type" value="bookshop" /> Bookshop Café</label>
+                <label class="form-check"><input type="checkbox" name="type" value="vegan" /> Vegan / Plant-based</label>
+                <label class="form-check"><input type="checkbox" name="type" value="bakery" /> Bakery Café</label>
+                <label class="form-check"><input type="checkbox" name="type" value="chain" /> Chain / Franchise</label>
+              </div>
+
+              <div class="filter-section">
+                <h5>Minimum Rating</h5>
+                <div class="filter-range">
+                  <span style="font-size:var(--fs-xs); color:var(--clr-muted); font-weight:600;">Rating:</span>
+                  <input type="range" min="1" max="5" value="3" id="ratingSlider"
+                    oninput="document.getElementById('ratingVal').value = this.value + ' / 5'" />
+                  <output id="ratingVal">3 / 5</output>
+                </div>
+              </div>
+
+              <div class="filter-section">
+                <h5>Opening Hours</h5>
+                <label class="form-check"><input type="radio" name="hours" value="any" checked /> Any time</label>
+                <label class="form-check"><input type="radio" name="hours" value="open" /> Open now</label>
+                <label class="form-check"><input type="radio" name="hours" value="early" /> Opens before 8am</label>
+                <label class="form-check"><input type="radio" name="hours" value="late" /> Open past 8pm</label>
+              </div>
+
+              <button class="btn btn-primary btn-block" type="button">Apply Filters</button>
+              <button class="btn btn-secondary btn-block" type="button" style="margin-top:var(--space-sm);">Reset All</button>
+            </div>
+          </aside>
+
+          <!-- Results -->
+          <div>
+            <!-- Count bar — hidden until results arrive -->
+            <div id="nearby-count-bar" style="justify-content:space-between; align-items:center; margin-bottom:var(--space-lg); flex-wrap:wrap; gap:var(--space-sm);">
+              <p id="nearby-count-text" style="margin:0; color:var(--clr-muted); font-size:var(--fs-sm);"></p>
+              <div style="display:flex; align-items:center; gap:var(--space-sm);">
+                <label for="sortBy" style="font-size:var(--fs-sm); white-space:nowrap;">Sort by:</label>
+                <select id="sortBy" style="font-size:var(--fs-sm); padding:0.4em 0.8em; border:2px solid var(--clr-border); border-radius:var(--radius-sm); background:var(--clr-white);">
+                  <option value="distance">Nearest First</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="reviews">Most Reviewed</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Dynamic nearby results injected here by JS -->
+            <div id="nearby-results">
+              <!-- Loading skeleton shown while location + API call are in flight -->
+              <div class="skeleton-card">
+                <div class="skeleton-img"></div>
+                <div class="skeleton-body">
+                  <div class="skeleton-line skeleton-line--title"></div>
+                  <div class="skeleton-line skeleton-line--meta"></div>
+                  <div class="skeleton-line skeleton-line--text"></div>
+                  <div class="skeleton-line skeleton-line--text2"></div>
+                </div>
+              </div>
+              <div class="skeleton-card">
+                <div class="skeleton-img"></div>
+                <div class="skeleton-body">
+                  <div class="skeleton-line skeleton-line--title"></div>
+                  <div class="skeleton-line skeleton-line--meta"></div>
+                  <div class="skeleton-line skeleton-line--text"></div>
+                  <div class="skeleton-line skeleton-line--text2"></div>
+                </div>
+              </div>
+              <div class="skeleton-card">
+                <div class="skeleton-img"></div>
+                <div class="skeleton-body">
+                  <div class="skeleton-line skeleton-line--title"></div>
+                  <div class="skeleton-line skeleton-line--meta"></div>
+                  <div class="skeleton-line skeleton-line--text"></div>
+                  <div class="skeleton-line skeleton-line--text2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Match Wizard -->
+    <section class="section section--white" id="wizard">
+      <div class="container">
+        <div class="text-center section-header">
+          <span class="card-tag">Not Sure Where to Start?</span>
+          <h2 class="section-title">Try the Match Wizard</h2>
+          <p class="section-sub">Answer three quick questions and we will find your ideal café.</p>
+        </div>
+
+        <div class="wizard-box">
+          <div class="wizard-progress">
+            <div class="wizard-dot done" id="dot1"></div>
+            <div class="wizard-dot" id="dot2"></div>
+            <div class="wizard-dot" id="dot3"></div>
+          </div>
+
+          <!-- Step 1 -->
+          <div class="wizard-step active" id="step1">
+            <h4 style="margin-bottom:var(--space-sm);">What brings you to a café today?</h4>
+            <p style="color:var(--clr-muted); font-size:var(--fs-sm); margin-bottom:0;">Step 1 of 3 — Choose one</p>
+            <div class="wizard-options">
+              <label class="wizard-opt">
+                <input type="radio" name="occasion" value="study" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Study / Work</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="radio" name="occasion" value="social" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Meet Friends</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="radio" name="occasion" value="chill" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Relax</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="radio" name="occasion" value="meeting" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Business Meeting</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="radio" name="occasion" value="read" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Read / Browse</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="radio" name="occasion" value="explore" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Explore New Area</span>
+              </label>
+            </div>
+            <div style="text-align:right;">
+              <button class="btn btn-primary" onclick="wizardNext(1)">Next</button>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="wizard-step" id="step2">
+            <h4 style="margin-bottom:var(--space-sm);">What matters most to you?</h4>
+            <p style="color:var(--clr-muted); font-size:var(--fs-sm); margin-bottom:0;">Step 2 of 3 — Select all that apply</p>
+            <div class="wizard-options">
+              <label class="wizard-opt">
+                <input type="checkbox" name="priority" value="wifi" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Fast Wi-Fi</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="checkbox" name="priority" value="quiet" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Quiet Space</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="checkbox" name="priority" value="cheap" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Budget Price</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="checkbox" name="priority" value="food" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Great Food</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="checkbox" name="priority" value="outdoor" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Outdoor Seating</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="checkbox" name="priority" value="vibe" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Great Atmosphere</span>
+              </label>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <button class="btn btn-secondary" onclick="wizardBack(2)">Back</button>
+              <button class="btn btn-primary" onclick="wizardNext(2)">Next</button>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="wizard-step" id="step3">
+            <h4 style="margin-bottom:var(--space-sm);">What is your budget?</h4>
+            <p style="color:var(--clr-muted); font-size:var(--fs-sm); margin-bottom:0;">Step 3 of 3 — Choose one</p>
+            <div class="wizard-options" style="grid-template-columns:repeat(3,1fr);">
+              <label class="wizard-opt">
+                <input type="radio" name="budget" value="low" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">Under £5</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="radio" name="budget" value="mid" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">£5 – £10</span>
+              </label>
+              <label class="wizard-opt">
+                <input type="radio" name="budget" value="high" />
+                <span class="wizard-opt-bar"></span>
+                <span class="wizard-opt-label">£10 and above</span>
+              </label>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <button class="btn btn-secondary" onclick="wizardBack(3)">Back</button>
+              <a href="listings.html" class="btn btn-primary">Show My Matches</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- How Matching Works -->
+    <section class="section section--cream">
+      <div class="container">
+        <div class="text-center section-header">
+          <span class="card-tag">How It Works</span>
+          <h2 class="section-title">How Café Matches Are Scored</h2>
+          <p class="section-sub">
+            Your answers are compared against every café's purpose fit, budget, amenities,
+            and atmosphere. Here is an example for a customer searching for a quiet study
+            spot on a &pound;5&ndash;&pound;10 budget.
+          </p>
+        </div>
+
+        <div style="max-width:700px; margin:0 auto;">
+
+          <div class="match-card">
+            <div class="match-score-badge">
+              <span class="match-score-num">7</span>
+              <span class="match-score-max">/ 7</span>
+            </div>
+            <div style="flex:1;">
+              <h4 style="margin-bottom:2px;">The Roasted Bean</h4>
+              <p style="font-size:var(--fs-sm); color:var(--clr-muted); margin-bottom:var(--space-xs);">Northern Quarter, Manchester</p>
+              <ul class="match-checklist">
+                <li class="match-yes">Purpose: Study (+2)</li>
+                <li class="match-yes">Budget: &pound;5&ndash;&pound;10 (+2)</li>
+                <li class="match-yes">Free Wi-Fi (+1)</li>
+                <li class="match-yes">Power Outlets (+1)</li>
+                <li class="match-yes">Quiet Space (+1)</li>
+              </ul>
+              <a href="listings.html#roasted-bean" class="btn btn-primary btn-sm">View Café</a>
+            </div>
+          </div>
+
+          <div class="match-card">
+            <div class="match-score-badge">
+              <span class="match-score-num">1</span>
+              <span class="match-score-max">/ 7</span>
+            </div>
+            <div style="flex:1;">
+              <h4 style="margin-bottom:2px;">Green Grounds</h4>
+              <p style="font-size:var(--fs-sm); color:var(--clr-muted); margin-bottom:var(--space-xs);">Chorlton, Manchester</p>
+              <ul class="match-checklist">
+                <li class="match-no">Purpose: Study (+0)</li>
+                <li class="match-no">Budget: &pound;5&ndash;&pound;10 (+0)</li>
+                <li class="match-yes">Free Wi-Fi (+1)</li>
+                <li class="match-no">Power Outlets (+0)</li>
+                <li class="match-no">Quiet Space (+0)</li>
+              </ul>
+              <a href="listings.html#green-grounds" class="btn btn-secondary btn-sm">View Café</a>
+            </div>
+          </div>
+
+          <p style="text-align:center; color:var(--clr-muted); font-size:var(--fs-sm); margin-top:var(--space-lg);">
+            The Match Wizard above ranks every café this way and shows the closest matches first.
+          </p>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="nav-logo">
+            <span class="nav-logo-mark"></span>
+            <span class="nav-logo-text">Café<span>Find</span></span>
+          </a>
+          <p>Connecting coffee lovers with the cafés they will adore — one cup at a time.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Explore</h5>
+          <ul>
+            <li><a href="search.html">Search Cafés</a></li>
+            <li><a href="listings.html">Browse Listings</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Account</h5>
+          <ul>
+            <li><a href="account.html">Create Account</a></li>
+            <li><a href="login.html">Log In</a></li>
+            <li><a href="Owners.html">Owner Portal</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Support</h5>
+          <ul>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li><a href="contact.html#faq">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 CaféFind. All rights reserved.</span>
+        <span>Crafted for coffee lovers everywhere.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* ── Match Wizard ───────────────────────────────────────── */
+    function wizardNext(current) {
+      document.getElementById('step' + current).classList.remove('active');
+      document.getElementById('step' + (current + 1)).classList.add('active');
+      document.getElementById('dot' + (current + 1)).classList.add('done');
+    }
+    function wizardBack(current) {
+      document.getElementById('step' + current).classList.remove('active');
+      document.getElementById('step' + (current - 1)).classList.add('active');
+      document.getElementById('dot' + current).classList.remove('done');
+    }
+  </script>
+
+  <!-- Google Maps JavaScript API
+       Replace YOUR_API_KEY with a real key from https://console.cloud.google.com/
+       Required APIs to enable: Maps JavaScript API -->
+  <script>
+    /* ── CaféFind Map Foundation ────────────────────────────────
+       Responsibilities:
+         1. Load the map centred on a UK default (Manchester)
+         2. Ask the browser for the user's current location
+         3. Re-centre the map and drop a "You are here" marker
+         4. Update the status badge to reflect each state
+         5. Show an appropriate notice if location is denied or fails
+       ────────────────────────────────────────────────────────── */
+
+    // Fallback centre used when location is unavailable (Manchester city centre)
+    var MAP_DEFAULT = { lat: 53.4808, lng: -2.2426 };
+    var MAP_DEFAULT_ZOOM = 13;
+
+    var cafeMap    = null;  // google.maps.Map instance
+    var userMarker = null;  // Marker for the user's position
+
+    /* Called automatically by the Maps JS API once the script loads */
+    function initMap() {
+      cafeMap = new google.maps.Map(document.getElementById('cafe-map'), {
+        center:            MAP_DEFAULT,
+        zoom:              MAP_DEFAULT_ZOOM,
+        mapTypeControl:    false,
+        streetViewControl: false,
+        fullscreenControl: true,
+        zoomControlOptions: {
+          position: google.maps.ControlPosition.RIGHT_BOTTOM
+        },
+        styles: [
+          // Subtle warm tint to complement the CaféFind colour palette
+          { featureType: 'poi.business', stylers: [{ visibility: 'simplified' }] },
+          { featureType: 'transit',      stylers: [{ visibility: 'off' }] }
+        ]
+      });
+
+      setStatus('locating', 'Locating you…');
+      requestUserLocation();
+    }
+
+    /* Ask the browser for geolocation */
+    function requestUserLocation() {
+      if (!navigator.geolocation) {
+        // Browser doesn't support geolocation at all
+        setStatus('denied', 'Location unavailable');
+        showNotice('mapNoticeError');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        onLocationSuccess,
+        onLocationError,
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    /* User granted location */
+    function onLocationSuccess(position) {
+      var userPos = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+
+      // Centre map on the user's position
+      cafeMap.setCenter(userPos);
+      cafeMap.setZoom(15);
+
+      // Remove any existing user marker before placing a new one
+      if (userMarker) { userMarker.setMap(null); }
+
+      // "You are here" marker using the brand accent colour
+      userMarker = new google.maps.Marker({
+        position:  userPos,
+        map:       cafeMap,
+        title:     'Your location',
+        icon: {
+          path:        google.maps.SymbolPath.CIRCLE,
+          scale:       10,
+          fillColor:   '#D85A30',   /* --clr-accent */
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2
+        },
+        animation: google.maps.Animation.DROP
+      });
+
+      // Info window that appears when the marker is clicked
+      var infoWindow = new google.maps.InfoWindow({
+        content: '<div style="font-family:Lato,sans-serif;font-size:0.875rem;color:#2C2420;padding:4px 2px;">' +
+                 '<strong>You are here</strong></div>'
+      });
+      userMarker.addListener('click', function () {
+        infoWindow.open(cafeMap, userMarker);
+      });
+
+      setStatus('located', 'Location found');
+
+      // Kick off nearby café search using the confirmed coordinates
+      nearbySearch(userPos);
+    }
+
+    /* User denied location or an error occurred */
+    function onLocationError(error) {
+      var isDenied = (error.code === error.PERMISSION_DENIED);
+
+      setStatus('denied', isDenied ? 'Location denied' : 'Location unavailable');
+      showNotice(isDenied ? 'mapNoticeDenied' : 'mapNoticeError');
+
+      // Map stays on the default centre so it remains usable
+    }
+
+    /* Update the status badge */
+    function setStatus(state, text) {
+      var dot  = document.getElementById('mapStatusDot');
+      var label = document.getElementById('mapStatusText');
+
+      dot.className  = 'map-status-dot ' + state;  // locating | located | denied
+      label.textContent = text;
+    }
+
+    /* Show one of the notice banners below the map */
+    function showNotice(id) {
+      document.getElementById(id).classList.add('show');
+    }
+
+    /* ── Nearby Café Search (Places JS Library) ────────────────
+       Called from onLocationSuccess with the confirmed {lat, lng}.
+       Uses google.maps.places.Place.searchNearby() — part of the
+       Maps JS API already loaded above. No separate API key needed.
+       ─────────────────────────────────────────────────────────── */
+
+    var SEARCH_RADIUS_M  = 5000;  // 5 km
+    var MAX_RESULTS      = 20;
+
+    // Module-level store so the sort selector can re-render without re-fetching
+    var nearbyPlaces   = [];
+    var nearbyUserPos  = null;
+
+    /* Search for nearby cafés using the Maps JS Places Library */
+    function nearbySearch(userPos) {
+      nearbyUserPos = userPos;
+
+      // Fields that map directly to what renderCafeCards() and
+      // addPlaceMarkersToMap() already consume
+      var requestFields = [
+        'id',
+        'displayName',
+        'formattedAddress',
+        'rating',
+        'userRatingCount',
+        'regularOpeningHours',
+        'photos',
+        'location'
+      ];
+
+      var center = new google.maps.LatLng(userPos.lat, userPos.lng);
+
+      google.maps.places.Place.searchNearby({
+        fields:          requestFields,
+        locationRestriction: {
+          center: center,
+          radius: SEARCH_RADIUS_M
+        },
+        includedPrimaryTypes: ['cafe'],
+        maxResultCount:  MAX_RESULTS,
+        language:        'en-GB'
+      })
+      .then(function (response) {
+        var places = response.places || [];
+        console.log('[CaféFind] Places Library returned:', places.length, 'results');
+
+        // Normalise Place objects into the flat shape renderCafeCards expects
+        var normalised = places.map(function (p) {
+          var loc = p.location;  // google.maps.LatLng instance
+          var distM = loc
+            ? calcDistance(userPos.lat, userPos.lng, loc.lat(), loc.lng())
+            : Infinity;
+
+          return {
+            // identity
+            id: p.id,
+            // display
+            displayName:      { text: p.displayName || 'Unnamed Café' },
+            formattedAddress: p.formattedAddress || '',
+            rating:           p.rating           || null,
+            userRatingCount:  p.userRatingCount   || null,
+            // hours — Places JS Library exposes regularOpeningHours.isOpen as a
+            // boolean property, not a function. Guard against missing data entirely.
+            currentOpeningHours: (function () {
+              var h = p.regularOpeningHours;
+              if (!h) return null;
+              // isOpen is a boolean on the Library object (not a method)
+              var openNow = (typeof h.isOpen === 'boolean') ? h.isOpen : null;
+              return openNow !== null ? { openNow: openNow } : null;
+            }()),
+            // photos — keep the Place object reference so getURI() works
+            _photoPlace: p,
+            // location as plain lat/lng for addPlaceMarkersToMap
+            location: loc ? { latitude: loc.lat(), longitude: loc.lng() } : null,
+            // computed
+            _distanceM: distM
+          };
+        });
+
+        nearbyPlaces = normalised;
+        renderCafeCards(nearbyPlaces, getCurrentSort());
+        addPlaceMarkersToMap(nearbyPlaces);
+      })
+      .catch(function (err) {
+        console.error('[CaféFind] Places Library error:', err);
+        document.getElementById('nearby-results').innerHTML =
+          '<div class="nearby-empty">' +
+          '<strong>Could not load nearby cafés</strong>' +
+          escHtml(err && err.message ? err.message : String(err)) +
+          '</div>';
+      });
+
+      // Wire sort selector — re-renders from the cached array, no new API call
+      document.getElementById('sortBy').addEventListener('change', function () {
+        renderCafeCards(nearbyPlaces, this.value);
+      });
+    }
+
+    /* Re-sort and redraw cards — called on initial load and on sort change */
+    function renderCafeCards(places, sortKey) {
+      var container = document.getElementById('nearby-results');
+      var countBar  = document.getElementById('nearby-count-bar');
+      var countText = document.getElementById('nearby-count-text');
+
+      if (!places || places.length === 0) {
+        container.innerHTML =
+          '<div class="nearby-empty">' +
+          '<strong>No nearby coffee shops found</strong>' +
+          'There are no cafés within ' + (SEARCH_RADIUS_M / 1000) + ' km of your location. ' +
+          'Try searching by city using the bar above.' +
+          '</div>';
+        countBar.classList.remove('visible');
+        return;
+      }
+
+      // Sort a shallow copy so the master array stays intact
+      var sorted = places.slice().sort(function (a, b) {
+        if (sortKey === 'rating')  return (b.rating || 0) - (a.rating || 0);
+        if (sortKey === 'reviews') return (b.userRatingCount || 0) - (a.userRatingCount || 0);
+        return (a._distanceM || 0) - (b._distanceM || 0); // default: distance
+      });
+
+      // Update count bar
+      var distKm = (SEARCH_RADIUS_M / 1000).toFixed(0);
+      countText.innerHTML =
+        'Showing <strong>' + sorted.length + '</strong> café' +
+        (sorted.length !== 1 ? 's' : '') +
+        ' within <strong>' + distKm + ' km</strong> of your location';
+      countBar.classList.add('visible');
+
+      // Build card HTML
+      var html = '';
+      sorted.forEach(function (place) {
+        var name    = place.displayName ? place.displayName.text : 'Unnamed Café';
+        var address = place.formattedAddress || '';
+        // Trim country suffix (", UK" / ", United Kingdom") for brevity
+        address = address.replace(/,\s*(UK|United Kingdom)\s*$/, '').trim();
+
+        var rating  = place.rating ? place.rating.toFixed(1) : null;
+        var reviews = place.userRatingCount || null;
+        var distTxt = place._distanceM < Infinity
+                        ? formatDistance(place._distanceM) : '';
+
+        // Opening hours
+        var openBadge = '';
+        if (place.currentOpeningHours) {
+          var isOpen = place.currentOpeningHours.openNow;
+          openBadge = isOpen
+            ? '<span class="badge-open">Open now</span>'
+            : '<span class="badge-closed">Closed</span>';
+        }
+
+        // Photo — Places JS Library: use getURI() on the stored Place reference
+        var photoHtml = '<div class="result-card-img-inner"></div>';
+        if (place._photoPlace && place._photoPlace.photos && place._photoPlace.photos.length > 0) {
+          var photoUri = place._photoPlace.photos[0].getURI({ maxWidth: 400 });
+          photoHtml =
+            '<img src="' + photoUri + '" alt="Photo of ' + escHtml(name) +
+            '" loading="lazy" onerror="this.parentNode.innerHTML=\'<div class=result-card-img-inner></div>\'" />';
+        }
+
+        // Stars
+        var starsHtml = rating
+          ? '<span class="stars">' + buildStars(parseFloat(rating)) + '</span>' : '';
+
+        // Google Maps directions link
+        var mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' +
+                      encodeURIComponent(name + ' ' + address);
+
+        html +=
+          '<article class="result-card">' +
+            '<div class="result-card-img">' + photoHtml + '</div>' +
+            '<div class="result-card-body">' +
+              '<h4>' + escHtml(name) + '</h4>' +
+              '<div class="result-card-meta">' +
+                (address  ? '<span>' + escHtml(address) + '</span>' : '') +
+                (distTxt  ? '<span>' + escHtml(distTxt) + '</span>' : '') +
+                (starsHtml ? starsHtml : '') +
+                (rating   ? '<span>' + rating + (reviews ? ' (' + reviews + ' reviews)' : '') + '</span>' : '') +
+                (openBadge ? '<span>' + openBadge + '</span>' : '') +
+              '</div>' +
+              '<div style="display:flex; gap:var(--space-sm); flex-wrap:wrap; margin-top:var(--space-md);">' +
+                '<a href="' + mapsUrl + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Get Directions</a>' +
+              '</div>' +
+            '</div>' +
+          '</article>';
+      });
+
+      container.innerHTML = html;
+    }
+
+    /* Drop a small pin on the map for each returned place */
+    function addPlaceMarkersToMap(places) {
+      places.forEach(function (place) {
+        if (!place.location) return;
+        var pos  = { lat: place.location.latitude, lng: place.location.longitude };
+        var name = place.displayName ? place.displayName.text : 'Café';
+
+        var marker = new google.maps.Marker({
+          position:  pos,
+          map:       cafeMap,
+          title:     name,
+          icon: {
+            path:        google.maps.SymbolPath.CIRCLE,
+            scale:       7,
+            fillColor:   '#6F4E37',   /* --clr-espresso */
+            fillOpacity: 0.9,
+            strokeColor: '#ffffff',
+            strokeWeight: 1.5
+          }
+        });
+
+        var iw = new google.maps.InfoWindow({
+          content:
+            '<div style="font-family:Lato,sans-serif;font-size:0.8rem;color:#2C2420;padding:2px 4px;max-width:180px;">' +
+            '<strong>' + escHtml(name) + '</strong>' +
+            (place.rating
+              ? '<br>' + place.rating.toFixed(1) + ' ★' +
+                (place.userRatingCount ? ' · ' + place.userRatingCount + ' reviews' : '')
+              : '') +
+            '</div>'
+        });
+        marker.addListener('click', function () { iw.open(cafeMap, marker); });
+      });
+    }
+
+    /* ── Helpers ─────────────────────────────────────────────── */
+
+    /* Haversine straight-line distance in metres */
+    function calcDistance(lat1, lng1, lat2, lng2) {
+      var R  = 6371000; // Earth radius in metres
+      var r1 = lat1 * Math.PI / 180;
+      var r2 = lat2 * Math.PI / 180;
+      var dr = (lat2 - lat1) * Math.PI / 180;
+      var dl = (lng2 - lng1) * Math.PI / 180;
+      var a  = Math.sin(dr / 2) * Math.sin(dr / 2) +
+               Math.cos(r1) * Math.cos(r2) *
+               Math.sin(dl / 2) * Math.sin(dl / 2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    /* Human-readable distance string */
+    function formatDistance(metres) {
+      if (metres < 1000) return Math.round(metres) + ' m away';
+      return (metres / 1000).toFixed(1) + ' km away';
+    }
+
+    /* Build a 5-star HTML string from a numeric rating (e.g. 4.3) */
+    function buildStars(rating) {
+      var html = '';
+      for (var i = 1; i <= 5; i++) {
+        if (rating >= i)       html += '&#9733;';       // full star
+        else if (rating >= i - 0.5) html += '&#9733;';  // half — use full for simplicity
+        else                   html += '&#9734;';       // empty star
+      }
+      return html;
+    }
+
+    /* Minimal HTML escaping to prevent XSS from API-returned strings */
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /* Read the current value of the sort selector */
+    function getCurrentSort() {
+      var sel = document.getElementById('sortBy');
+      return sel ? sel.value : 'distance';
+    }
+  </script>
+
+  <!-- Load the Google Maps JavaScript API asynchronously.
+       'callback=initMap' tells the API to call our initMap() once ready.
+       Replace YOUR_API_KEY below with your actual key. -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA-5EipbEHVvUbtZm2TRxxWUNc8y2IV-LI&loading=async&libraries=places&callback=initMap"
+    async defer></script>
+
+</body>
+</html>
